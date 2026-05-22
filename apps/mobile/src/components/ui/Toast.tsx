@@ -82,10 +82,7 @@ function ToastViewport({
 }) {
   const insets = useSafeAreaInsets();
   return (
-    <View
-      pointerEvents="box-none"
-      style={[styles.viewport, { top: insets.top + 8 }]}
-    >
+    <View pointerEvents="box-none" style={[styles.viewport, { top: insets.top + 8 }]}>
       {toasts.map((t) => (
         <ToastItem key={t.id} toast={t} onDismiss={onDismiss} />
       ))}

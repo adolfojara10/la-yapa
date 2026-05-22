@@ -3,6 +3,7 @@ Base Django settings for La Yapa API.
 
 Environment-specific settings (dev, test, prod) inherit from this file.
 """
+
 from pathlib import Path
 
 import environ

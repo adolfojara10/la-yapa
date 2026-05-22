@@ -1,12 +1,5 @@
-import {
-  Fraunces_700Bold,
-  useFonts as useFraunces,
-} from '@expo-google-fonts/fraunces';
-import {
-  Inter_400Regular,
-  Inter_500Medium,
-  useFonts as useInter,
-} from '@expo-google-fonts/inter';
+import { Fraunces_700Bold, useFonts as useFraunces } from '@expo-google-fonts/fraunces';
+import { Inter_400Regular, Inter_500Medium, useFonts as useInter } from '@expo-google-fonts/inter';
 import {
   Poppins_600SemiBold,
   Poppins_700Bold,

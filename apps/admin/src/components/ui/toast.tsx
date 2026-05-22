@@ -66,7 +66,11 @@ export const ToastDescription = forwardRef<
   ElementRef<typeof ToastPrimitive.Description>,
   ComponentPropsWithoutRef<typeof ToastPrimitive.Description>
 >(({ className, ...props }, ref) => (
-  <ToastPrimitive.Description ref={ref} className={cn('text-small opacity-90', className)} {...props} />
+  <ToastPrimitive.Description
+    ref={ref}
+    className={cn('text-small opacity-90', className)}
+    {...props}
+  />
 ));
 ToastDescription.displayName = ToastPrimitive.Description.displayName;
 

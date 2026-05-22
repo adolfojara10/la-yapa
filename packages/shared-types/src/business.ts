@@ -1,10 +1,4 @@
-export type BusinessType =
-  | 'restaurant'
-  | 'bakery'
-  | 'supermarket'
-  | 'hotel'
-  | 'mercado'
-  | 'farmer';
+export type BusinessType = 'restaurant' | 'bakery' | 'supermarket' | 'hotel' | 'mercado' | 'farmer';
 
 export type BusinessStatus = 'pending' | 'approved' | 'suspended' | 'rejected';
 

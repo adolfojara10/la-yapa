@@ -1,4 +1,5 @@
 """WSGI config for the La Yapa API."""
+
 import os
 
 from django.core.wsgi import get_wsgi_application

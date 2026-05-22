@@ -1,12 +1,6 @@
 import { Eye, EyeOff, Search } from 'lucide-react-native';
 import { forwardRef, useState, type ReactNode } from 'react';
-import {
-  Pressable,
-  StyleSheet,
-  TextInput,
-  type TextInputProps,
-  View,
-} from 'react-native';
+import { Pressable, StyleSheet, TextInput, type TextInputProps, View } from 'react-native';
 
 import { useTheme } from '@/theme';
 
@@ -69,7 +63,7 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
       )}
     </Pressable>
   ) : (
-    rightIcon ?? null
+    (rightIcon ?? null)
   );
 
   return (

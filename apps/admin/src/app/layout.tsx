@@ -31,9 +31,7 @@ export const metadata: Metadata = {
   description: 'Panel de administración de La Yapa.',
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html
       lang="es"

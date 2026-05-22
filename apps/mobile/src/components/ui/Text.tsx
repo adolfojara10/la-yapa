@@ -1,6 +1,11 @@
 import type { TypeScaleToken } from '@layapa/ui';
 import type { ReactNode } from 'react';
-import { Text as RNText, type StyleProp, type TextProps as RNTextProps, type TextStyle } from 'react-native';
+import {
+  Text as RNText,
+  type StyleProp,
+  type TextProps as RNTextProps,
+  type TextStyle,
+} from 'react-native';
 
 import { useTheme } from '@/theme';
 

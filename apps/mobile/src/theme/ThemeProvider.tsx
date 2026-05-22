@@ -1,8 +1,4 @@
-import {
-  buildTheme,
-  type Theme,
-  type ThemeMode,
-} from '@layapa/ui';
+import { buildTheme, type Theme, type ThemeMode } from '@layapa/ui';
 import {
   createContext,
   useCallback,
@@ -60,10 +56,7 @@ export function ThemeProvider({
   }, [forceMode, preference, systemScheme]);
 
   const setPreference = useCallback((pref: ThemePreference) => setPreferenceState(pref), []);
-  const toggle = useCallback(
-    () => setResolved((m) => (m === 'dark' ? 'light' : 'dark')),
-    [],
-  );
+  const toggle = useCallback(() => setResolved((m) => (m === 'dark' ? 'light' : 'dark')), []);
 
   const value = useMemo<ThemeContextValue>(
     () => ({

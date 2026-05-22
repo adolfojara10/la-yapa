@@ -38,15 +38,15 @@ A helper `buildTheme(mode)` returns the full `Theme` object that the mobile
 
 Per master vision:
 
-| Token       | Size / Line | Font / Weight       |
-| ----------- | ----------- | ------------------- |
-| `h1`        | 32 / 40     | Poppins 700         |
-| `h2`        | 24 / 32     | Poppins 600         |
-| `h3`        | 20 / 28     | Poppins 600         |
-| `body`      | 16 / 24     | Inter 400           |
-| `bodyStrong`| 16 / 24     | Inter 500           |
-| `small`     | 14 / 20     | Inter 400           |
-| `caption`   | 12 / 16     | Inter 500           |
+| Token        | Size / Line | Font / Weight |
+| ------------ | ----------- | ------------- |
+| `h1`         | 32 / 40     | Poppins 700   |
+| `h2`         | 24 / 32     | Poppins 600   |
+| `h3`         | 20 / 28     | Poppins 600   |
+| `body`       | 16 / 24     | Inter 400     |
+| `bodyStrong` | 16 / 24     | Inter 500     |
+| `small`      | 14 / 20     | Inter 400     |
+| `caption`    | 12 / 16     | Inter 500     |
 
 ### Spacing (4px base)
 
@@ -111,34 +111,34 @@ function Example() {
 
 ### Mobile (`apps/mobile/src/components/ui/`)
 
-| Component  | File             | Notes                                                          |
-| ---------- | ---------------- | -------------------------------------------------------------- |
-| `Text`     | `Text.tsx`       | Theme-aware text with variant + color tokens                   |
-| `Button`   | `Button.tsx`     | primary / secondary / ghost / danger · sm / md / lg · loading  |
-| `Input`    | `Input.tsx`      | text / password / search · label · error / helper · icons      |
-| `Card`     | `Card.tsx`       | Surface container with optional elevation                      |
-| `Badge`    | `Badge.tsx`      | 7 tones, soft backgrounds                                      |
-| `Avatar`   | `Avatar.tsx`     | Image with initials fallback, 4 sizes                          |
-| `Modal`    | `Modal.tsx`      | Centered, animated, backdrop-dismissible                       |
-| `BottomSheet` | `BottomSheet.tsx` | Wraps `@gorhom/bottom-sheet`, theme-styled handle/backdrop |
-| `Toast`    | `Toast.tsx`      | `ToastProvider` + `useToast({ title, tone, durationMs })`      |
-| `Skeleton` | `Skeleton.tsx`   | Pulse-animated placeholder                                     |
-| `Icon`     | `Icon.tsx`       | Thin wrapper around `lucide-react-native` with theme tones     |
+| Component     | File              | Notes                                                         |
+| ------------- | ----------------- | ------------------------------------------------------------- |
+| `Text`        | `Text.tsx`        | Theme-aware text with variant + color tokens                  |
+| `Button`      | `Button.tsx`      | primary / secondary / ghost / danger · sm / md / lg · loading |
+| `Input`       | `Input.tsx`       | text / password / search · label · error / helper · icons     |
+| `Card`        | `Card.tsx`        | Surface container with optional elevation                     |
+| `Badge`       | `Badge.tsx`       | 7 tones, soft backgrounds                                     |
+| `Avatar`      | `Avatar.tsx`      | Image with initials fallback, 4 sizes                         |
+| `Modal`       | `Modal.tsx`       | Centered, animated, backdrop-dismissible                      |
+| `BottomSheet` | `BottomSheet.tsx` | Wraps `@gorhom/bottom-sheet`, theme-styled handle/backdrop    |
+| `Toast`       | `Toast.tsx`       | `ToastProvider` + `useToast({ title, tone, durationMs })`     |
+| `Skeleton`    | `Skeleton.tsx`    | Pulse-animated placeholder                                    |
+| `Icon`        | `Icon.tsx`        | Thin wrapper around `lucide-react-native` with theme tones    |
 
 Showcase: run `pnpm --filter @layapa/mobile dev` → tap **Ver design system**.
 
 ### Admin (`apps/admin/src/components/ui/`)
 
-| Component     | File          | Notes                                                  |
-| ------------- | ------------- | ------------------------------------------------------ |
-| `Button`      | `button.tsx`  | shadcn-pattern (cva + Radix Slot) — 5 variants, 4 sizes |
-| `Input`       | `input.tsx`   | Includes `error` flag for invalid styling              |
-| `Card`        | `card.tsx`    | `Card · CardHeader · CardTitle · CardContent · CardFooter` |
-| `Badge`       | `badge.tsx`   | 8 tone variants                                        |
-| `Avatar`      | `avatar.tsx`  | Radix Avatar with brand fallback                       |
-| `Dialog`      | `dialog.tsx`  | Radix Dialog, theme-styled                             |
-| `Toast`       | `toast.tsx`   | Radix Toast primitives — wire a `<ToastViewport>` once |
-| `Skeleton`    | `skeleton.tsx`| Tailwind `animate-pulse`                               |
+| Component  | File           | Notes                                                      |
+| ---------- | -------------- | ---------------------------------------------------------- |
+| `Button`   | `button.tsx`   | shadcn-pattern (cva + Radix Slot) — 5 variants, 4 sizes    |
+| `Input`    | `input.tsx`    | Includes `error` flag for invalid styling                  |
+| `Card`     | `card.tsx`     | `Card · CardHeader · CardTitle · CardContent · CardFooter` |
+| `Badge`    | `badge.tsx`    | 8 tone variants                                            |
+| `Avatar`   | `avatar.tsx`   | Radix Avatar with brand fallback                           |
+| `Dialog`   | `dialog.tsx`   | Radix Dialog, theme-styled                                 |
+| `Toast`    | `toast.tsx`    | Radix Toast primitives — wire a `<ToastViewport>` once     |
+| `Skeleton` | `skeleton.tsx` | Tailwind `animate-pulse`                                   |
 
 Showcase: run `pnpm --filter @layapa/admin dev` → visit `http://localhost:3000`.
 

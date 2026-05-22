@@ -1,4 +1,5 @@
 """Custom user model — set up early to avoid painful migrations later."""
+
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 

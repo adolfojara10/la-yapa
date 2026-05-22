@@ -1,11 +1,5 @@
 import { forwardRef, type ReactNode } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  type PressableProps,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, type PressableProps, StyleSheet, View } from 'react-native';
 
 import { useTheme } from '@/theme';
 

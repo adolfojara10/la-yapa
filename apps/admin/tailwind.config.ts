@@ -20,10 +20,7 @@ const cssVar = (name: string) => `var(--color-${name})`;
 
 const config: Config = {
   darkMode: ['class', '[data-theme="dark"]'],
-  content: [
-    './src/**/*.{js,ts,jsx,tsx,mdx}',
-    '../../packages/ui/src/**/*.{js,ts,jsx,tsx}',
-  ],
+  content: ['./src/**/*.{js,ts,jsx,tsx,mdx}', '../../packages/ui/src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
       colors: {
@@ -93,9 +90,7 @@ const config: Config = {
         ],
       },
 
-      spacing: Object.fromEntries(
-        Object.entries(spacing).map(([k, v]) => [k, `${v}px`]),
-      ),
+      spacing: Object.fromEntries(Object.entries(spacing).map(([k, v]) => [k, `${v}px`])),
 
       borderRadius: {
         none: `${radii.none}px`,

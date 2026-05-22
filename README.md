@@ -28,19 +28,19 @@ la-yapa/
 
 ## 🚀 Tech stack
 
-| Layer            | Choice                                                           |
-| ---------------- | ---------------------------------------------------------------- |
-| Monorepo         | pnpm 9 workspaces + Turborepo 2                                  |
-| Mobile           | React Native 0.74 + Expo SDK 51 + Expo Router                    |
-| Web admin        | Next.js 14 (App Router) + Tailwind CSS                           |
-| State            | Zustand + TanStack Query                                         |
-| Backend          | Django 5.1 + DRF + Simple JWT                                    |
-| Database         | PostgreSQL 16                                                    |
-| Cache / queue    | Redis 7 + Celery                                                 |
-| Email (dev)      | MailHog (`http://localhost:8025`)                                |
-| Lint / format    | Ruff + Black + mypy (Python); ESLint + Prettier (TS)             |
-| Tests            | pytest (API); Jest (mobile + admin)                              |
-| CI               | GitHub Actions                                                   |
+| Layer         | Choice                                               |
+| ------------- | ---------------------------------------------------- |
+| Monorepo      | pnpm 9 workspaces + Turborepo 2                      |
+| Mobile        | React Native 0.74 + Expo SDK 51 + Expo Router        |
+| Web admin     | Next.js 14 (App Router) + Tailwind CSS               |
+| State         | Zustand + TanStack Query                             |
+| Backend       | Django 5.1 + DRF + Simple JWT                        |
+| Database      | PostgreSQL 16                                        |
+| Cache / queue | Redis 7 + Celery                                     |
+| Email (dev)   | MailHog (`http://localhost:8025`)                    |
+| Lint / format | Ruff + Black + mypy (Python); ESLint + Prettier (TS) |
+| Tests         | pytest (API); Jest (mobile + admin)                  |
+| CI            | GitHub Actions                                       |
 
 ---
 
@@ -48,13 +48,13 @@ la-yapa/
 
 Install these once on your machine:
 
-| Tool       | Version    | Install                                                                          |
-| ---------- | ---------- | -------------------------------------------------------------------------------- |
-| Node.js    | ≥ 20       | `brew install node` or [nvm](https://github.com/nvm-sh/nvm)                      |
-| pnpm       | ≥ 9        | `npm install -g pnpm` or `brew install pnpm`                                     |
-| Python     | 3.12       | `brew install python@3.12`                                                       |
-| Docker     | latest     | [Docker Desktop](https://www.docker.com/products/docker-desktop/)                |
-| Watchman   | latest     | `brew install watchman` (recommended for Expo)                                   |
+| Tool     | Version | Install                                                           |
+| -------- | ------- | ----------------------------------------------------------------- |
+| Node.js  | ≥ 20    | `brew install node` or [nvm](https://github.com/nvm-sh/nvm)       |
+| pnpm     | ≥ 9     | `npm install -g pnpm` or `brew install pnpm`                      |
+| Python   | 3.12    | `brew install python@3.12`                                        |
+| Docker   | latest  | [Docker Desktop](https://www.docker.com/products/docker-desktop/) |
+| Watchman | latest  | `brew install watchman` (recommended for Expo)                    |
 
 Optional (only if you want native iOS/Android builds):
 
@@ -97,9 +97,9 @@ pnpm dev
 
 `pnpm dev` runs `apps/api`, `apps/mobile`, and `apps/admin` in parallel via Turborepo:
 
-- API:     http://localhost:8000  (admin at `/admin`, docs at `/api/docs/`)
-- Admin:   http://localhost:3000
-- Mobile:  Expo Dev Server (scan QR with Expo Go or press `i`/`a`)
+- API: http://localhost:8000 (admin at `/admin`, docs at `/api/docs/`)
+- Admin: http://localhost:3000
+- Mobile: Expo Dev Server (scan QR with Expo Go or press `i`/`a`)
 - MailHog: http://localhost:8025
 
 > ⚠️ `pnpm dev` will only start the API correctly if `apps/api/.venv` is activated
@@ -162,16 +162,21 @@ pnpm --filter @layapa/admin test
 Husky + lint-staged are configured automatically on `pnpm install` (via the
 `prepare` script). On commit:
 
-- `*.{ts,tsx,js,jsx,json,md,yml}` → Prettier
-- `apps/api/**/*.py` → Ruff (with `--fix`) + Black
+- `*.{ts,tsx,js,jsx,json,md,yml,yaml,css}` → Prettier
 
-To enable the Python-native `pre-commit` framework as well (optional):
+Python formatting (Ruff + Black) is **not** wired into Husky on purpose —
+it would break commits for frontend contributors who don't have a Python
+environment set up. API contributors should install the Python-native
+`pre-commit` framework instead (it manages its own isolated env):
 
 ```bash
 cd apps/api && source .venv/bin/activate
 pip install pre-commit
-pre-commit install
+pre-commit install   # installs the hooks defined in .pre-commit-config.yaml
 ```
+
+CI runs Ruff + Black on every PR regardless, so unformatted Python can never
+land in `main`.
 
 ---
 
@@ -180,13 +185,13 @@ pre-commit install
 Each app reads its own `.env` file (gitignored). Templates live next to them
 (`apps/*/​.env.example`). The most important ones:
 
-| Var                            | Used by  | Default (dev)                                       |
-| ------------------------------ | -------- | --------------------------------------------------- |
-| `DATABASE_URL`                 | api      | `postgres://layapa:layapa@localhost:5432/layapa`    |
-| `REDIS_URL`                    | api      | `redis://localhost:6379/0`                          |
-| `EMAIL_HOST` / `EMAIL_PORT`    | api      | `localhost` / `1025` (MailHog)                      |
-| `EXPO_PUBLIC_API_BASE_URL`     | mobile   | `http://localhost:8000/api/v1`                      |
-| `NEXT_PUBLIC_API_BASE_URL`     | admin    | `http://localhost:8000/api/v1`                      |
+| Var                         | Used by | Default (dev)                                    |
+| --------------------------- | ------- | ------------------------------------------------ |
+| `DATABASE_URL`              | api     | `postgres://layapa:layapa@localhost:5432/layapa` |
+| `REDIS_URL`                 | api     | `redis://localhost:6379/0`                       |
+| `EMAIL_HOST` / `EMAIL_PORT` | api     | `localhost` / `1025` (MailHog)                   |
+| `EXPO_PUBLIC_API_BASE_URL`  | mobile  | `http://localhost:8000/api/v1`                   |
+| `NEXT_PUBLIC_API_BASE_URL`  | admin   | `http://localhost:8000/api/v1`                   |
 
 ---
 

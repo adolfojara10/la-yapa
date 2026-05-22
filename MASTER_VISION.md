@@ -13,8 +13,8 @@ Perfect! Generating the **master prompt now**. Buckle up — this is comprehensi
 ### 🎯 Project Identity
 
 **Name:** La Yapa  
-**Tagline (ES):** *"Comida rescatada, planeta cuidado."*  
-**Tagline (EN):** *"Rescued food, planet saved."*  
+**Tagline (ES):** _"Comida rescatada, planeta cuidado."_  
+**Tagline (EN):** _"Rescued food, planet saved."_  
 **Mission:** Reduce food waste in Ecuador by connecting consumers with restaurants, bakeries, supermarkets, hotels, mercados, and farmers offering surplus food at discounted prices via "surprise bags" and specific item listings.
 
 **Vision:** Become Ecuador's leading sustainable food platform, starting in Cuenca and expanding nationwide, eventually integrating delivery, food rescue NGOs, and community-driven impact.
@@ -26,26 +26,31 @@ Perfect! Generating the **master prompt now**. Buckle up — this is comprehensi
 ### 👥 User Personas
 
 **1. Sofía — Consumer (Eco-conscious millennial, 28, Cuenca)**
+
 - Wants to save money + reduce waste
 - Uses iPhone, Apple Pay
 - Discovers via Instagram
 
 **2. Don Carlos — Business Owner (Bakery, 52, Cuenca)**
+
 - Throws away 5kg of bread daily
 - Wants extra revenue + good karma
 - Needs SIMPLE app (not tech-savvy)
 
 **3. María — Mercado Vendor (Vegetables, 45, Mercado 10 de Agosto)**
+
 - No formal RUC
 - Sells via cash + DeUna
 - Needs ultra-simple onboarding
 
 **4. Pedro — Farmer (Producer, 38, Gualaceo)**
+
 - Has surplus produce weekly
 - Wants direct-to-consumer
 - Needs flexible scheduling
 
 **5. Ana — Admin/Sales Rep (Internal team)**
+
 - Manages business approvals, disputes, payouts
 - Needs powerful dashboard
 
@@ -54,43 +59,47 @@ Perfect! Generating the **master prompt now**. Buckle up — this is comprehensi
 ### 🎨 Brand Identity
 
 #### Color Palette (Andean Modern Minimalist)
+
 ```css
 /* Primary */
---verde-paramo: #2D6A4F;       /* Andean deep green - primary */
---terracotta-inti: #D97757;    /* Sun terracotta - secondary */
---amarillo-sol: #F4C430;       /* Golden yellow - accent */
+--verde-paramo: #2d6a4f; /* Andean deep green - primary */
+--terracotta-inti: #d97757; /* Sun terracotta - secondary */
+--amarillo-sol: #f4c430; /* Golden yellow - accent */
 
 /* Neutrals */
---algodon: #FAF6F0;            /* Cream background */
---blanco-puro: #FFFFFF;        /* Pure white */
---tierra: #1B2D2A;             /* Dark text */
---niebla: #6B7B78;             /* Muted gray text */
---piedra: #E5E1D8;             /* Borders/dividers */
+--algodon: #faf6f0; /* Cream background */
+--blanco-puro: #ffffff; /* Pure white */
+--tierra: #1b2d2a; /* Dark text */
+--niebla: #6b7b78; /* Muted gray text */
+--piedra: #e5e1d8; /* Borders/dividers */
 
 /* Dark Mode */
---dark-bg: #0F1A18;
---dark-surface: #1A2A26;
---dark-border: #2A3D38;
---dark-text: #E8E5DE;
+--dark-bg: #0f1a18;
+--dark-surface: #1a2a26;
+--dark-border: #2a3d38;
+--dark-text: #e8e5de;
 
 /* Semantic */
---success-eco: #52B788;        /* Eco green */
---warning: #F4A261;            /* Warning orange */
---error: #C44536;              /* Error red */
---info: #4A90E2;               /* Info blue */
+--success-eco: #52b788; /* Eco green */
+--warning: #f4a261; /* Warning orange */
+--error: #c44536; /* Error red */
+--info: #4a90e2; /* Info blue */
 ```
 
 #### Typography
+
 - **Headers:** Poppins (600, 700)
 - **Body:** Inter (400, 500)
 - **Accent/Logo:** Fraunces (700)
 
 #### Logo
+
 - **Mark:** Abstract stylized leaf (subtle Andean mountain shape integrated)
 - **Wordmark:** "La Yapa" in Poppins Bold
 - **Variants:** Full logo, mark only, wordmark only, monochrome
 
 #### Mascot — Yapi 🦙
+
 - **Character:** Friendly minimalist geometric llama
 - **Style:** Soft rounded shapes, cream/beige body, terracotta poncho with subtle Andean pattern, golden bag
 - **Personality:** Warm, optimistic, helpful, slightly playful
@@ -103,14 +112,17 @@ Perfect! Generating the **master prompt now**. Buckle up — this is comprehensi
 ### 💰 Monetization Strategy
 
 **Phase 1 (MVP — Months 1-6):**
+
 - 15-20% commission per sale
 - FREE for mercado vendors & farmers (first 12 months)
 
 **Phase 2 (Months 6-12):**
+
 - Business Freemium: Free basic / Premium $20-30/mo (analytics, featured placement, multi-location)
 - Featured listing boosts: $1-5
 
 **Phase 3 (12+ months):**
+
 - "La Yapa Plus" consumer subscription ($1.99/mo): No ads, 24h early access, exclusive bags, 5% cashback, exclusive badges, monthly free suspended meal donation, priority support
 - Ad-supported free tier (eco-aligned brands, clearly marked "Patrocinado")
 
@@ -118,28 +130,28 @@ Perfect! Generating the **master prompt now**. Buckle up — this is comprehensi
 
 ### 🚀 Tech Stack (LOCKED IN)
 
-| Layer | Choice |
-|---|---|
-| Mobile | React Native + Expo (SDK 50+) |
-| State Management | Zustand + React Query (TanStack Query) |
-| Navigation | Expo Router (file-based) |
-| Backend | Django 5.x + Django REST Framework |
-| Database | PostgreSQL 16 |
-| Authentication | Django Simple JWT + django-allauth (Google, Apple) |
-| Admin Panel | Django Admin (customized with Jazzmin/Unfold) + custom DRF endpoints for business panel |
-| Business Panel | Next.js 14 (App Router) — web-based |
-| Maps | Mapbox (mobile SDK + Geocoding API) |
-| Payments | PayPhone + DeUna (MVP); Kushki (Phase 2 for Apple/Google Pay + intl cards) |
-| File Storage | Cloudflare R2 (S3-compatible) |
-| Push Notifications | Expo Push Notifications |
-| Email | Resend |
-| Hosting | Railway (MVP), portable to AWS/GCP via Docker |
-| Error Tracking | Sentry |
-| Analytics | PostHog (cloud free tier) |
-| Electronic Invoicing | Dátil or Contífico (SRI integration) |
-| CI/CD | GitHub Actions |
-| Languages | Spanish (default) + English (i18next on mobile, django-modeltranslation on backend) |
-| Monorepo Tool | pnpm workspaces + Turborepo |
+| Layer                | Choice                                                                                  |
+| -------------------- | --------------------------------------------------------------------------------------- |
+| Mobile               | React Native + Expo (SDK 50+)                                                           |
+| State Management     | Zustand + React Query (TanStack Query)                                                  |
+| Navigation           | Expo Router (file-based)                                                                |
+| Backend              | Django 5.x + Django REST Framework                                                      |
+| Database             | PostgreSQL 16                                                                           |
+| Authentication       | Django Simple JWT + django-allauth (Google, Apple)                                      |
+| Admin Panel          | Django Admin (customized with Jazzmin/Unfold) + custom DRF endpoints for business panel |
+| Business Panel       | Next.js 14 (App Router) — web-based                                                     |
+| Maps                 | Mapbox (mobile SDK + Geocoding API)                                                     |
+| Payments             | PayPhone + DeUna (MVP); Kushki (Phase 2 for Apple/Google Pay + intl cards)              |
+| File Storage         | Cloudflare R2 (S3-compatible)                                                           |
+| Push Notifications   | Expo Push Notifications                                                                 |
+| Email                | Resend                                                                                  |
+| Hosting              | Railway (MVP), portable to AWS/GCP via Docker                                           |
+| Error Tracking       | Sentry                                                                                  |
+| Analytics            | PostHog (cloud free tier)                                                               |
+| Electronic Invoicing | Dátil or Contífico (SRI integration)                                                    |
+| CI/CD                | GitHub Actions                                                                          |
+| Languages            | Spanish (default) + English (i18next on mobile, django-modeltranslation on backend)     |
+| Monorepo Tool        | pnpm workspaces + Turborepo                                                             |
 
 ---
 
@@ -296,13 +308,13 @@ Bag
     - is_active
     - is_suspended_meal_eligible (bool)
     - created_at
-    
+
     # Validation: sale_price <= 0.5 * original_price, sale_price >= 1.50
 
 DietaryTag
     - name (vegetarian, vegan, gluten_free, sin_lactosa, organico, halal, kosher, etc.)
     - icon_name
-    
+
 AllergenTag
     - name (mani, gluten, lacteos, frutos_secos, mariscos, huevo, soya, etc.)
     - icon_name
@@ -390,7 +402,7 @@ Badge
     - category (saver | streak | community | explorer | premium)
     - criteria (JSON, e.g., {meals_saved: 10})
     - rarity (common | rare | epic | legendary)
-    
+
 UserBadge
     - user (FK User)
     - badge (FK Badge)
@@ -508,6 +520,7 @@ Invoice
 
 - RESTful, versioned: `/api/v1/...`
 - JSON responses with consistent envelope:
+
 ```json
 {
   "success": true,
@@ -516,6 +529,7 @@ Invoice
   "errors": null
 }
 ```
+
 - Pagination: cursor-based for feeds, offset for admin
 - Rate limiting (100 req/min for users, 1000 for businesses)
 - All endpoints require auth except `/auth/*`, `/public/*`
@@ -577,6 +591,7 @@ Invoice
 ### 🔔 Notifications Strategy
 
 **Push (Expo) — Consumers:**
+
 - 🆕 New bag from favorite business
 - ⏰ Last-minute deal (bag expiring in < 2h, auto -50%)
 - 📍 Pickup reminder (1h + 30min before window closes)
@@ -585,6 +600,7 @@ Invoice
 - 🎁 Suspended meal accepted (anonymous notification: "Your gift fed someone today!")
 
 **Push — Businesses:**
+
 - 🔔 New order (loud, high priority)
 - ❌ Order cancelled by user
 - ⭐ New review received
@@ -592,6 +608,7 @@ Invoice
 - 🎁 Suspended meal bag dispatched
 
 **Email (Resend):**
+
 - Welcome email (consumer + business)
 - Email verification
 - Password reset
@@ -724,6 +741,7 @@ app/
 | 5 | Galápagos | 15,000 | Legendary |
 
 **XP earned per:**
+
 - Bag rescued: 50 XP
 - Review left: 25 XP
 - Referral completed: 200 XP
@@ -731,18 +749,20 @@ app/
 - Weekly streak (4 weeks): 300 XP bonus
 
 **Badges (initial set, ~30):**
-- 🌱 *Primer Rescate* — First bag bought
-- 🍞 *Pan de Oro* — 10 bakery bags
-- 🥗 *Veggie Hero* — 20 vegetarian bags
-- 🏃 *Maratón Eco* — 4-week streak
-- 💝 *Corazón Generoso* — First suspended meal donated
-- 🌎 *Salvador del Planeta* — 50kg CO₂ saved
-- 🦙 *Amigo de Yapi* — Profile completed + 5 bags
-- 🌋 *Conquistador del Cotopaxi* — Reach Cotopaxi level
-- 🐢 *Guardián de Galápagos* — Reach Galápagos level
-- 👥 *Embajador* — 5 referrals completed
+
+- 🌱 _Primer Rescate_ — First bag bought
+- 🍞 _Pan de Oro_ — 10 bakery bags
+- 🥗 _Veggie Hero_ — 20 vegetarian bags
+- 🏃 _Maratón Eco_ — 4-week streak
+- 💝 _Corazón Generoso_ — First suspended meal donated
+- 🌎 _Salvador del Planeta_ — 50kg CO₂ saved
+- 🦙 _Amigo de Yapi_ — Profile completed + 5 bags
+- 🌋 _Conquistador del Cotopaxi_ — Reach Cotopaxi level
+- 🐢 _Guardián de Galápagos_ — Reach Galápagos level
+- 👥 _Embajador_ — 5 referrals completed
 
 **Leaderboards:**
+
 - Friends (Phase 2 — needs friend system)
 - City (weekly, monthly, all-time)
 - Nationwide (monthly, all-time)
@@ -753,12 +773,14 @@ app/
 ### 🌍 Impact Tracking
 
 **Per user (and platform-wide aggregated):**
+
 - 🍽️ Meals rescued (bag count)
 - ⚖️ Kg of food saved (estimated: surprise bags = 1.5kg avg, specific = manual entry)
 - 💨 CO₂ saved (kg_food × 2.5)
 - 💰 Money saved (original_price - sale_price)
 
 **Display:**
+
 - Profile screen
 - Monthly push: "¡Salvaste 12 comidas este mes!"
 - Yearly recap (Spotify Wrapped style with Yapi)
@@ -776,6 +798,7 @@ app/
 6. **Public counter updates:** "12,453 comidas donadas por la comunidad"
 
 **Anti-abuse:**
+
 - Max 5 suspended meals per business location per day
 - Admin can flag suspicious businesses
 - Random audits via admin panel
@@ -791,10 +814,10 @@ app/
 class PaymentProvider(ABC):
     @abstractmethod
     def create_charge(self, order, payment_method): ...
-    
+
     @abstractmethod
     def refund(self, transaction_id, amount): ...
-    
+
     @abstractmethod
     def handle_webhook(self, payload): ...
 
@@ -814,6 +837,7 @@ def process_payment(order, provider_name, payment_method):
 ```
 
 **Payout Workflow:**
+
 1. Order completed + 24h dispute window passed → credit business balance
 2. Cron job runs daily checks for due payouts (weekly Mon / monthly 1st)
 3. Generates `Payout` with `status=pending`
@@ -827,6 +851,7 @@ def process_payment(order, provider_name, payment_method):
 ### 🧪 Testing Strategy
 
 **Backend (Django):**
+
 - pytest + pytest-django
 - 80% coverage minimum for `apps/orders`, `apps/payments`, `apps/businesses`
 - Factory Boy for fixtures
@@ -834,16 +859,19 @@ def process_payment(order, provider_name, payment_method):
 - Integration tests for critical flows (signup → order → payout)
 
 **Mobile (React Native):**
+
 - Jest for unit tests
 - React Native Testing Library for components
 - Detox or Maestro for E2E (key flows: signup, browse, buy, pickup)
 - Storybook for design system components
 
 **Admin (Next.js):**
+
 - Jest + Testing Library
 - Playwright for E2E
 
 **CI/CD checks:**
+
 - Lint (ESLint + Ruff)
 - Type check (TypeScript + mypy)
 - Tests
@@ -855,26 +883,31 @@ def process_payment(order, provider_name, payment_method):
 ### 🚢 Deployment & DevOps
 
 **Environments:**
+
 - `development` (local)
 - `staging` (Railway, separate project)
 - `production` (Railway → AWS/GCP at scale)
 
 **Docker:**
+
 - All services containerized
 - `docker-compose.yml` for local dev (Postgres, Redis, MailHog)
 
 **CI/CD (GitHub Actions):**
+
 - PR → Run tests + lint
 - Merge to `main` → Deploy to staging
 - Tagged release → Deploy to production
 - Mobile: EAS Build + EAS Submit (Expo Application Services)
 
 **Monitoring:**
+
 - Sentry (errors)
 - Better Stack (uptime + logs)
 - PostHog (product analytics)
 
 **Backups:**
+
 - Daily Postgres backups to Cloudflare R2
 - 30-day retention
 
@@ -918,9 +951,10 @@ docs/legal/
 
 **App Name:** La Yapa  
 **Subtitle (ES):** Comida rescatada con yapa  
-**Subtitle (EN):** Rescued food, sustainable savings  
+**Subtitle (EN):** Rescued food, sustainable savings
 
 **Description (ES):**
+
 > 🌱 La Yapa es la primera app de Ecuador para rescatar comida en buen estado a precios increíbles. Conecta con restaurantes, panaderías, supermercados, hoteles, mercados y agricultores locales que venden "bolsas sorpresa" con productos del día a 1/3 de su precio.
 >
 > ✨ ¿Por qué La Yapa?
@@ -933,7 +967,7 @@ docs/legal/
 >
 > Únete a la comunidad que está rescatando el planeta, una yapa a la vez. 🦙🌎
 
-**Keywords (ES):** comida, ecuador, descuento, sustentable, eco, restaurantes, ahorro, desperdicio, cuenca, food, mercados  
+**Keywords (ES):** comida, ecuador, descuento, sustentable, eco, restaurantes, ahorro, desperdicio, cuenca, food, mercados
 
 **Categories:** Food & Drink (primary), Lifestyle (secondary)
 
@@ -942,6 +976,7 @@ docs/legal/
 ### 📅 Phased Development Roadmap (3-5 months)
 
 #### **Phase 0 — Foundation (Week 1-2)**
+
 - Monorepo setup (Turborepo + pnpm)
 - Backend project (Django + DRF + Postgres + Docker)
 - Mobile project (Expo + design system + theme)
@@ -953,6 +988,7 @@ docs/legal/
 - Authentication (email + Google + Apple)
 
 #### **Phase 1 — Consumer Core MVP (Weeks 3-6)**
+
 - Browse bags (list + map view)
 - Filters (dietary, allergens, distance, price)
 - Bag detail screen
@@ -966,6 +1002,7 @@ docs/legal/
 - i18n (ES + EN)
 
 #### **Phase 2 — Business Core MVP (Weeks 7-9)**
+
 - Business onboarding (formal + informal tiers)
 - Business mobile app (bag CRUD, order management, scanner)
 - Sales rep admin flow (create businesses)
@@ -974,6 +1011,7 @@ docs/legal/
 - Business analytics (basic)
 
 #### **Phase 3 — Admin & Operations (Weeks 10-11)**
+
 - Admin dashboard (Next.js)
 - Business approval queue
 - Payout approval + CSV export
@@ -982,6 +1020,7 @@ docs/legal/
 - Platform analytics
 
 #### **Phase 4 — Community & Engagement (Weeks 12-14)**
+
 - Suspended meals (donate + dispatch)
 - Gamification (badges, levels, XP)
 - Impact tracker (personal + platform-wide)
@@ -989,6 +1028,7 @@ docs/legal/
 - Referral program
 
 #### **Phase 5 — Polish & Launch (Weeks 15-18)**
+
 - Electronic invoicing integration (Dátil/Contífico)
 - Performance optimization
 - E2E testing
@@ -998,6 +1038,7 @@ docs/legal/
 - Press kit + launch campaign
 
 #### **Phase 6 — Post-Launch (Months 5-6+)**
+
 - Loyalty program
 - In-app chat with business
 - Kushki integration (Apple/Google Pay)
