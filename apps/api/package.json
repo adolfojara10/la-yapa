@@ -1,0 +1,19 @@
+{
+  "name": "@layapa/api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "La Yapa Django REST API",
+  "scripts": {
+    "dev": "python manage.py runserver 0.0.0.0:8000",
+    "build": "python manage.py collectstatic --noinput",
+    "lint": "ruff check . && mypy .",
+    "format": "ruff check --fix . && black .",
+    "test": "pytest",
+    "type-check": "mypy .",
+    "migrate": "python manage.py migrate",
+    "makemigrations": "python manage.py makemigrations",
+    "shell": "python manage.py shell",
+    "createsuperuser": "python manage.py createsuperuser",
+    "clean": "find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true"
+  }
+}

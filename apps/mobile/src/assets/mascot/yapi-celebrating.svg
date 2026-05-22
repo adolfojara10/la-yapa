@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 240" width="200" height="240" aria-label="Yapi celebrating (placeholder)">
+  <title>Yapi celebrating</title>
+  <ellipse cx="100" cy="222" rx="56" ry="6" fill="#1B2D2A" opacity="0.10"/>
+  <ellipse cx="100" cy="160" rx="62" ry="52" fill="#FAF6F0" stroke="#E5E1D8" stroke-width="2"/>
+  <path d="M 50 158 Q 100 200 150 158 L 150 188 Q 100 218 50 188 Z" fill="#D97757"/>
+  <path d="M 60 175 h 80 M 60 185 h 80" stroke="#FAF6F0" stroke-width="2" stroke-dasharray="4 4" opacity="0.7"/>
+  <!-- Raised arms (legs as arms) -->
+  <rect x="50" y="120" width="14" height="40" rx="6" fill="#FAF6F0" stroke="#E5E1D8" stroke-width="2" transform="rotate(-30 57 140)"/>
+  <rect x="136" y="120" width="14" height="40" rx="6" fill="#FAF6F0" stroke="#E5E1D8" stroke-width="2" transform="rotate(30 143 140)"/>
+  <rect x="72" y="200" width="14" height="22" rx="6" fill="#FAF6F0" stroke="#E5E1D8" stroke-width="2"/>
+  <rect x="114" y="200" width="14" height="22" rx="6" fill="#FAF6F0" stroke="#E5E1D8" stroke-width="2"/>
+  <rect x="90" y="80" width="20" height="60" rx="10" fill="#FAF6F0" stroke="#E5E1D8" stroke-width="2"/>
+  <ellipse cx="100" cy="62" rx="34" ry="30" fill="#FAF6F0" stroke="#E5E1D8" stroke-width="2"/>
+  <path d="M 78 42 L 72 22 L 88 38 Z" fill="#FAF6F0" stroke="#E5E1D8" stroke-width="2"/>
+  <path d="M 122 42 L 128 22 L 112 38 Z" fill="#FAF6F0" stroke="#E5E1D8" stroke-width="2"/>
+  <!-- Star eyes -->
+  <path d="M 88 58 L 90 62 L 94 62 L 91 65 L 92 69 L 88 67 L 84 69 L 85 65 L 82 62 L 86 62 Z" fill="#F4C430"/>
+  <path d="M 112 58 L 114 62 L 118 62 L 115 65 L 116 69 L 112 67 L 108 69 L 109 65 L 106 62 L 110 62 Z" fill="#F4C430"/>
+  <!-- Open mouth -->
+  <ellipse cx="100" cy="78" rx="5" ry="6" fill="#1B2D2A"/>
+  <!-- Confetti -->
+  <rect x="30" y="30" width="6" height="6" fill="#F4C430" transform="rotate(20 33 33)"/>
+  <rect x="160" y="40" width="6" height="6" fill="#D97757" transform="rotate(-15 163 43)"/>
+  <rect x="40" y="80" width="6" height="6" fill="#52B788" transform="rotate(35 43 83)"/>
+  <rect x="170" y="90" width="6" height="6" fill="#F4C430" transform="rotate(-25 173 93)"/>
+</svg>

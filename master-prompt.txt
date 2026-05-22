@@ -1,0 +1,1673 @@
+Perfect! Generating the **master prompt now**. Buckle up — this is comprehensive. 🚀
+
+---
+
+# 🌱 LA YAPA — MASTER DEVELOPMENT PROMPT
+
+## 📄 PART 1 — MASTER VISION DOCUMENT
+
+> Use this as the foundational context document. Feed this to any AI coding agent (Claude Code, Cursor, Aider, etc.) before any implementation prompt.
+
+---
+
+### 🎯 Project Identity
+
+**Name:** La Yapa  
+**Tagline (ES):** *"Comida rescatada, planeta cuidado."*  
+**Tagline (EN):** *"Rescued food, planet saved."*  
+**Mission:** Reduce food waste in Ecuador by connecting consumers with restaurants, bakeries, supermarkets, hotels, mercados, and farmers offering surplus food at discounted prices via "surprise bags" and specific item listings.
+
+**Vision:** Become Ecuador's leading sustainable food platform, starting in Cuenca and expanding nationwide, eventually integrating delivery, food rescue NGOs, and community-driven impact.
+
+**Inspiration:** Too Good To Go — but better designed, more culturally rooted, with deeper community impact (suspended meals, gamification, impact tracking).
+
+---
+
+### 👥 User Personas
+
+**1. Sofía — Consumer (Eco-conscious millennial, 28, Cuenca)**
+- Wants to save money + reduce waste
+- Uses iPhone, Apple Pay
+- Discovers via Instagram
+
+**2. Don Carlos — Business Owner (Bakery, 52, Cuenca)**
+- Throws away 5kg of bread daily
+- Wants extra revenue + good karma
+- Needs SIMPLE app (not tech-savvy)
+
+**3. María — Mercado Vendor (Vegetables, 45, Mercado 10 de Agosto)**
+- No formal RUC
+- Sells via cash + DeUna
+- Needs ultra-simple onboarding
+
+**4. Pedro — Farmer (Producer, 38, Gualaceo)**
+- Has surplus produce weekly
+- Wants direct-to-consumer
+- Needs flexible scheduling
+
+**5. Ana — Admin/Sales Rep (Internal team)**
+- Manages business approvals, disputes, payouts
+- Needs powerful dashboard
+
+---
+
+### 🎨 Brand Identity
+
+#### Color Palette (Andean Modern Minimalist)
+```css
+/* Primary */
+--verde-paramo: #2D6A4F;       /* Andean deep green - primary */
+--terracotta-inti: #D97757;    /* Sun terracotta - secondary */
+--amarillo-sol: #F4C430;       /* Golden yellow - accent */
+
+/* Neutrals */
+--algodon: #FAF6F0;            /* Cream background */
+--blanco-puro: #FFFFFF;        /* Pure white */
+--tierra: #1B2D2A;             /* Dark text */
+--niebla: #6B7B78;             /* Muted gray text */
+--piedra: #E5E1D8;             /* Borders/dividers */
+
+/* Dark Mode */
+--dark-bg: #0F1A18;
+--dark-surface: #1A2A26;
+--dark-border: #2A3D38;
+--dark-text: #E8E5DE;
+
+/* Semantic */
+--success-eco: #52B788;        /* Eco green */
+--warning: #F4A261;            /* Warning orange */
+--error: #C44536;              /* Error red */
+--info: #4A90E2;               /* Info blue */
+```
+
+#### Typography
+- **Headers:** Poppins (600, 700)
+- **Body:** Inter (400, 500)
+- **Accent/Logo:** Fraunces (700)
+
+#### Logo
+- **Mark:** Abstract stylized leaf (subtle Andean mountain shape integrated)
+- **Wordmark:** "La Yapa" in Poppins Bold
+- **Variants:** Full logo, mark only, wordmark only, monochrome
+
+#### Mascot — Yapi 🦙
+- **Character:** Friendly minimalist geometric llama
+- **Style:** Soft rounded shapes, cream/beige body, terracotta poncho with subtle Andean pattern, golden bag
+- **Personality:** Warm, optimistic, helpful, slightly playful
+- **Usage:** Empty states, achievements, onboarding, badges, push notifications, marketing
+- **NOT in:** App icon, logo, splash screen
+- **States needed:** Happy, sleepy, celebrating, sad, chef, runner, eco-warrior
+
+---
+
+### 💰 Monetization Strategy
+
+**Phase 1 (MVP — Months 1-6):**
+- 15-20% commission per sale
+- FREE for mercado vendors & farmers (first 12 months)
+
+**Phase 2 (Months 6-12):**
+- Business Freemium: Free basic / Premium $20-30/mo (analytics, featured placement, multi-location)
+- Featured listing boosts: $1-5
+
+**Phase 3 (12+ months):**
+- "La Yapa Plus" consumer subscription ($1.99/mo): No ads, 24h early access, exclusive bags, 5% cashback, exclusive badges, monthly free suspended meal donation, priority support
+- Ad-supported free tier (eco-aligned brands, clearly marked "Patrocinado")
+
+---
+
+### 🚀 Tech Stack (LOCKED IN)
+
+| Layer | Choice |
+|---|---|
+| Mobile | React Native + Expo (SDK 50+) |
+| State Management | Zustand + React Query (TanStack Query) |
+| Navigation | Expo Router (file-based) |
+| Backend | Django 5.x + Django REST Framework |
+| Database | PostgreSQL 16 |
+| Authentication | Django Simple JWT + django-allauth (Google, Apple) |
+| Admin Panel | Django Admin (customized with Jazzmin/Unfold) + custom DRF endpoints for business panel |
+| Business Panel | Next.js 14 (App Router) — web-based |
+| Maps | Mapbox (mobile SDK + Geocoding API) |
+| Payments | PayPhone + DeUna (MVP); Kushki (Phase 2 for Apple/Google Pay + intl cards) |
+| File Storage | Cloudflare R2 (S3-compatible) |
+| Push Notifications | Expo Push Notifications |
+| Email | Resend |
+| Hosting | Railway (MVP), portable to AWS/GCP via Docker |
+| Error Tracking | Sentry |
+| Analytics | PostHog (cloud free tier) |
+| Electronic Invoicing | Dátil or Contífico (SRI integration) |
+| CI/CD | GitHub Actions |
+| Languages | Spanish (default) + English (i18next on mobile, django-modeltranslation on backend) |
+| Monorepo Tool | pnpm workspaces + Turborepo |
+
+---
+
+### 🗂️ Monorepo Structure
+
+```
+la-yapa/
+├── apps/
+│   ├── mobile/                  # React Native + Expo (consumer + business apps)
+│   │   ├── src/
+│   │   │   ├── app/             # Expo Router routes
+│   │   │   ├── components/      # UI components
+│   │   │   ├── features/        # Feature-based modules
+│   │   │   ├── lib/             # Utilities, API client
+│   │   │   ├── hooks/
+│   │   │   ├── stores/          # Zustand stores
+│   │   │   ├── theme/           # Design tokens, colors
+│   │   │   ├── locales/         # i18n (es, en)
+│   │   │   └── assets/          # Images, mascot illustrations, fonts
+│   │   ├── app.json
+│   │   └── package.json
+│   │
+│   ├── admin/                   # Next.js 14 admin/business dashboard
+│   │   ├── src/
+│   │   │   ├── app/             # Next.js App Router
+│   │   │   ├── components/
+│   │   │   ├── lib/
+│   │   │   └── styles/
+│   │   └── package.json
+│   │
+│   └── api/                     # Django REST API
+│       ├── config/              # Django settings
+│       ├── apps/
+│       │   ├── users/
+│       │   ├── businesses/
+│       │   ├── bags/            # Surprise + specific listings
+│       │   ├── orders/
+│       │   ├── payments/
+│       │   ├── reviews/
+│       │   ├── notifications/
+│       │   ├── gamification/
+│       │   ├── suspended_meals/
+│       │   ├── impact/
+│       │   ├── geo/             # Mapbox integration
+│       │   └── core/            # Shared utils
+│       ├── manage.py
+│       ├── requirements.txt
+│       └── Dockerfile
+│
+├── packages/
+│   ├── shared-types/            # TypeScript types shared between mobile/admin
+│   ├── ui/                      # Shared design tokens
+│   └── eslint-config/
+│
+├── docs/
+│   ├── architecture.md
+│   ├── api.md
+│   ├── design-system.md
+│   ├── mascot-guidelines.md
+│   ├── deployment.md
+│   └── legal/
+│       ├── privacy-policy.md
+│       ├── terms-of-service.md
+│       └── business-agreement.md
+│
+├── .github/workflows/           # CI/CD
+├── docker-compose.yml
+├── turbo.json
+├── pnpm-workspace.yaml
+└── README.md
+```
+
+---
+
+### 📊 Database Schema (Core Models)
+
+```python
+# === USERS ===
+User(AbstractUser)
+    - email (unique, primary login)
+    - phone
+    - role (consumer | business_owner | admin | sales_rep)
+    - language (es | en)
+    - is_premium (bool, Phase 3)
+    - premium_expires_at
+    - created_at
+
+ConsumerProfile (OneToOne with User)
+    - first_name, last_name
+    - avatar_url
+    - default_location (PointField — Mapbox)
+    - default_address
+    - dietary_preferences (M2M with DietaryTag)
+    - notifications_settings (JSON)
+    - referral_code (unique)
+    - referred_by (FK self, nullable)
+
+# === BUSINESSES ===
+Business
+    - owner (FK User)
+    - name
+    - business_type (restaurant | bakery | supermarket | hotel | mercado | farmer | other)
+    - tier (formal | informal) # formal = RUC required; informal = mercados/farmers
+    - description
+    - logo_url, cover_url
+    - phone, email, website
+    - status (pending | approved | suspended | rejected)
+    - rejection_reason
+    - approved_by (FK User, nullable)
+    - approved_at
+    - payout_frequency (weekly | monthly)
+    - payout_method (bank_transfer | de_una)
+    - bank_account (encrypted JSON)
+    - commission_rate (decimal, default 0.18)
+    - created_at
+
+BusinessLocation
+    - business (FK Business)
+    - name (e.g., "Sucursal Centro")
+    - address
+    - location (PointField)
+    - phone
+    - is_active
+    - hours_of_operation (JSON)
+
+BusinessVerification
+    - business (FK Business)
+    - ruc_number (nullable)
+    - ruc_document_url (nullable)
+    - cedula_number
+    - cedula_document_url
+    - selfie_with_cedula_url (for informal tier)
+    - permiso_funcionamiento_url (nullable)
+    - arcsa_url (nullable)
+    - bank_proof_url
+    - business_photo_url (for informal)
+    - food_safety_terms_accepted_at
+
+# === BAGS / LISTINGS ===
+Bag
+    - business_location (FK BusinessLocation)
+    - type (surprise | specific)
+    - title (auto-generated for surprise, custom for specific)
+    - description
+    - image_url (multi for specific items)
+    - original_price (Decimal)
+    - sale_price (Decimal)
+    - quantity_available
+    - quantity_total (snapshot of initial qty)
+    - dietary_tags (M2M)
+    - allergen_warnings (M2M)
+    - pickup_window_start (DateTime, flexible chosen by business)
+    - pickup_window_end (DateTime)
+    - is_active
+    - is_suspended_meal_eligible (bool)
+    - created_at
+    
+    # Validation: sale_price <= 0.5 * original_price, sale_price >= 1.50
+
+DietaryTag
+    - name (vegetarian, vegan, gluten_free, sin_lactosa, organico, halal, kosher, etc.)
+    - icon_name
+    
+AllergenTag
+    - name (mani, gluten, lacteos, frutos_secos, mariscos, huevo, soya, etc.)
+    - icon_name
+
+# === ORDERS ===
+Order
+    - consumer (FK User)
+    - bag (FK Bag)
+    - business_location (FK BusinessLocation, snapshot)
+    - quantity
+    - original_price_snapshot
+    - sale_price_snapshot
+    - total_paid
+    - platform_commission
+    - business_payout_amount
+    - pickup_code (random 4-digit)
+    - pickup_qr_token (UUID)
+    - status (pending_payment | paid | ready_for_pickup | completed | cancelled | refunded | expired)
+    - cancelled_by (consumer | business | admin | system)
+    - cancelled_at
+    - cancellation_reason
+    - picked_up_at
+    - payment_method
+    - payment_provider_ref
+    - created_at
+
+# === PAYMENTS ===
+PaymentTransaction
+    - order (FK Order)
+    - provider (payphone | de_una | kushki | stripe)
+    - provider_transaction_id
+    - amount
+    - currency (default USD)
+    - status (pending | success | failed | refunded)
+    - raw_response (JSON)
+    - created_at
+
+Payout
+    - business (FK Business)
+    - period_start, period_end
+    - total_amount
+    - total_orders
+    - status (pending | approved | processing | paid | failed)
+    - approved_by (FK User)
+    - approved_at
+    - paid_at
+    - bank_reference
+    - created_at
+
+PayoutLineItem
+    - payout (FK Payout)
+    - order (FK Order)
+    - amount
+    - type (sale | refund_deduction | bonus_credit_deduction)
+
+# === REVIEWS ===
+Review
+    - order (FK Order, OneToOne)
+    - consumer (FK User)
+    - business_location (FK)
+    - rating (1-5)
+    - comment (optional, max 500 chars)
+    - created_at
+    - is_visible (admin moderation)
+
+# === NOTIFICATIONS ===
+NotificationPreference
+    - user (FK User)
+    - favorite_business_new_bags (bool)
+    - last_minute_deals (bool)
+    - pickup_reminders (bool)
+    - order_updates (bool)
+    - achievements (bool)
+    - marketing (bool)
+
+PushToken
+    - user (FK User)
+    - token
+    - platform (ios | android)
+    - is_active
+
+# === GAMIFICATION ===
+Badge
+    - name, description, icon_url
+    - category (saver | streak | community | explorer | premium)
+    - criteria (JSON, e.g., {meals_saved: 10})
+    - rarity (common | rare | epic | legendary)
+    
+UserBadge
+    - user (FK User)
+    - badge (FK Badge)
+    - earned_at
+
+UserLevel
+    - user (OneToOne User)
+    - level_name (bronce | plata | oro | cotopaxi | galapagos)
+    - xp_total
+    - meals_rescued
+    - kg_saved
+    - co2_saved_kg
+    - money_saved_usd
+    - current_streak_weeks
+    - longest_streak_weeks
+
+Leaderboard
+    - scope (friends | city | nationwide)
+    - period (weekly | monthly | all_time)
+    # Computed dynamically via queries
+
+# === SUSPENDED MEALS ===
+SuspendedMealDonation
+    - donor (FK User)
+    - amount
+    - bag (FK Bag, nullable) # specific bag or general pool
+    - status (active | claimed | expired)
+    - claimed_by_business (FK BusinessLocation, nullable)
+    - claimed_at
+    - is_anonymous (bool, default True)
+    - created_at
+
+SuspendedMealClaim
+    - donation (FK SuspendedMealDonation)
+    - business_location (FK)
+    - beneficiary_notes (vendor notes, optional)
+    - claimed_at
+
+# === FAVORITES ===
+Favorite
+    - user (FK User)
+    - business_location (FK)
+    - created_at
+
+# === IMPACT ===
+ImpactStat (cached per user, updated on order completion)
+    - user
+    - meals_rescued
+    - kg_food_saved
+    - co2_kg_saved (calculated: kg_food * 2.5)
+    - money_saved
+    - last_calculated_at
+
+# === REFERRALS ===
+Referral
+    - referrer (FK User)
+    - referred (FK User)
+    - status (pending | completed) # completed when referred makes first purchase
+    - reward_credit_amount
+    - completed_at
+
+# === DISPUTES ===
+Dispute
+    - order (FK Order)
+    - opened_by (consumer | business)
+    - reason
+    - description
+    - evidence_urls (JSON list)
+    - status (open | under_review | resolved_refund | resolved_no_refund | closed)
+    - resolution_notes
+    - resolved_by (FK User)
+    - resolved_at
+    - created_at
+
+# === ADMIN / SALES ===
+SalesRepProfile (Phase 2)
+    - user (OneToOne)
+    - businesses_onboarded (M2M)
+    - commission_rate
+
+# === ADS (Phase 3) ===
+AdCampaign
+    - business (FK)
+    - type (featured_listing | banner | sponsored_search)
+    - start_date, end_date
+    - budget
+    - status
+
+# === ELECTRONIC INVOICING ===
+Invoice
+    - order (FK Order)
+    - type (consumer_invoice | platform_commission_invoice)
+    - sri_authorization_number
+    - sri_xml_url
+    - pdf_url
+    - status (pending | authorized | rejected)
+    - created_at
+```
+
+---
+
+### 🔐 Authentication Flow
+
+- Email + password (default)
+- Google OAuth
+- Apple Sign In
+- JWT tokens (access 15min, refresh 7 days)
+- Password reset via email
+- Email verification required
+- Optional phone verification (Phase 2)
+
+---
+
+### 🌐 API Design Principles
+
+- RESTful, versioned: `/api/v1/...`
+- JSON responses with consistent envelope:
+```json
+{
+  "success": true,
+  "data": {...},
+  "message": "...",
+  "errors": null
+}
+```
+- Pagination: cursor-based for feeds, offset for admin
+- Rate limiting (100 req/min for users, 1000 for businesses)
+- All endpoints require auth except `/auth/*`, `/public/*`
+- OpenAPI/Swagger auto-generated via drf-spectacular
+- Error codes documented (`AUTH_001`, `PAY_002`, etc.)
+
+#### Endpoint Categories
+
+```
+/api/v1/auth/                      # Login, register, refresh, password reset
+/api/v1/users/me                   # Current user profile
+/api/v1/consumer/                  # Consumer-specific
+  ├── /bags                        # Browse bags (with filters, geo radius)
+  ├── /bags/{id}
+  ├── /favorites
+  ├── /orders
+  ├── /reviews
+  ├── /impact
+  ├── /referrals
+  ├── /badges
+  └── /suspended-meals/donate
+
+/api/v1/business/                  # Business-specific (mobile + web)
+  ├── /me
+  ├── /locations
+  ├── /bags                        # CRUD
+  ├── /orders                      # Active + history
+  ├── /orders/{id}/confirm-pickup  # QR or PIN
+  ├── /reviews
+  ├── /analytics
+  ├── /payouts
+  └── /suspended-meals/dispatch    # Mark as dispatched to needy person
+
+/api/v1/admin/                     # Admin panel (sales team)
+  ├── /businesses/pending
+  ├── /businesses/{id}/approve
+  ├── /payouts/pending
+  ├── /payouts/{id}/approve
+  ├── /disputes
+  ├── /users
+  └── /analytics/dashboard
+
+/api/v1/payments/                  # Payment provider webhooks
+  ├── /payphone/webhook
+  ├── /de-una/webhook
+  └── /kushki/webhook
+
+/api/v1/geo/                       # Geo + maps
+  ├── /search                      # Mapbox proxy
+  └── /reverse                     # Reverse geocoding
+
+/api/v1/notifications/
+  ├── /register-token
+  └── /preferences
+```
+
+---
+
+### 🔔 Notifications Strategy
+
+**Push (Expo) — Consumers:**
+- 🆕 New bag from favorite business
+- ⏰ Last-minute deal (bag expiring in < 2h, auto -50%)
+- 📍 Pickup reminder (1h + 30min before window closes)
+- ✅ Order confirmation
+- 🏆 Badge earned
+- 🎁 Suspended meal accepted (anonymous notification: "Your gift fed someone today!")
+
+**Push — Businesses:**
+- 🔔 New order (loud, high priority)
+- ❌ Order cancelled by user
+- ⭐ New review received
+- 💰 Payout processed
+- 🎁 Suspended meal bag dispatched
+
+**Email (Resend):**
+- Welcome email (consumer + business)
+- Email verification
+- Password reset
+- Weekly digest (Phase 2)
+- Monthly impact report
+- Payout receipts
+- Tax documents (annual)
+
+---
+
+### 🗺️ Map & Discovery
+
+- **Default radius:** 3km
+- **Location:** Required (graceful fallback to city-level if denied)
+- **Map view:** Mapbox with custom Andean-themed style
+- **Markers:** Business locations with bag count badge
+- **Filters:** Type, dietary tags, allergens, price range, pickup time, rating
+- **Sort:** Distance, price, rating, ending soon
+- **Search:** Mapbox Geocoding for address/place search
+
+---
+
+### 📱 Mobile App Structure (Expo Router)
+
+```
+app/
+├── (auth)/
+│   ├── welcome.tsx
+│   ├── login.tsx
+│   ├── register.tsx
+│   ├── forgot-password.tsx
+│   └── onboarding.tsx
+├── (consumer)/
+│   ├── _layout.tsx               # Bottom tabs
+│   ├── index.tsx                 # Home feed (list + map toggle)
+│   ├── map.tsx
+│   ├── search.tsx
+│   ├── bag/[id].tsx
+│   ├── checkout/[bagId].tsx
+│   ├── orders/
+│   │   ├── index.tsx
+│   │   └── [id].tsx              # Order detail with QR + PIN
+│   ├── favorites.tsx
+│   ├── impact.tsx
+│   ├── badges.tsx
+│   ├── leaderboard.tsx
+│   ├── suspended-meals.tsx
+│   └── profile/
+│       ├── index.tsx
+│       ├── edit.tsx
+│       ├── settings.tsx
+│       ├── notifications.tsx
+│       ├── referrals.tsx
+│       └── premium.tsx           # Phase 3
+├── (business)/
+│   ├── _layout.tsx               # Bottom tabs
+│   ├── dashboard.tsx
+│   ├── bags/
+│   │   ├── index.tsx
+│   │   ├── new.tsx
+│   │   └── [id].tsx
+│   ├── orders/
+│   │   ├── index.tsx
+│   │   ├── active.tsx
+│   │   ├── history.tsx
+│   │   └── scanner.tsx           # QR scan + PIN entry
+│   ├── analytics.tsx
+│   ├── reviews.tsx
+│   ├── payouts.tsx
+│   └── settings/
+│       ├── index.tsx
+│       ├── locations.tsx
+│       └── profile.tsx
+└── _layout.tsx                   # Root layout with theme provider
+```
+
+**Role-based routing:** After login, redirect to `(consumer)` or `(business)` based on user role.
+
+---
+
+### 🖥️ Admin Panel (Next.js) Pages
+
+```
+/login
+/dashboard                        # KPIs overview
+/businesses
+  /pending
+  /approved
+  /suspended
+  /{id}                           # Detail + actions
+/users
+  /consumers
+  /admins
+  /sales-reps                     # Phase 2
+/orders                           # Search + filter
+/payouts
+  /pending
+  /history
+  /{id}                           # Approve + generate CSV
+/disputes
+  /open
+  /resolved
+/bags                             # All bags (moderation)
+/reviews                          # Moderation queue
+/suspended-meals                  # Pool + history
+/gamification
+  /badges
+  /levels
+/content                          # FAQ, banners, push campaigns
+/analytics
+  /revenue
+  /impact
+  /users
+/settings
+  /commission-rates
+  /platform-config
+```
+
+---
+
+### 🎮 Gamification System
+
+**Levels (XP-based):**
+| Level | Name | XP Required | Theme |
+|---|---|---|---|
+| 1 | Bronce | 0 | Starting |
+| 2 | Plata | 500 | First milestones |
+| 3 | Oro | 2,000 | Loyal saver |
+| 4 | Cotopaxi | 5,000 | Champion |
+| 5 | Galápagos | 15,000 | Legendary |
+
+**XP earned per:**
+- Bag rescued: 50 XP
+- Review left: 25 XP
+- Referral completed: 200 XP
+- Suspended meal donated: 100 XP
+- Weekly streak (4 weeks): 300 XP bonus
+
+**Badges (initial set, ~30):**
+- 🌱 *Primer Rescate* — First bag bought
+- 🍞 *Pan de Oro* — 10 bakery bags
+- 🥗 *Veggie Hero* — 20 vegetarian bags
+- 🏃 *Maratón Eco* — 4-week streak
+- 💝 *Corazón Generoso* — First suspended meal donated
+- 🌎 *Salvador del Planeta* — 50kg CO₂ saved
+- 🦙 *Amigo de Yapi* — Profile completed + 5 bags
+- 🌋 *Conquistador del Cotopaxi* — Reach Cotopaxi level
+- 🐢 *Guardián de Galápagos* — Reach Galápagos level
+- 👥 *Embajador* — 5 referrals completed
+
+**Leaderboards:**
+- Friends (Phase 2 — needs friend system)
+- City (weekly, monthly, all-time)
+- Nationwide (monthly, all-time)
+- Opt-in only (privacy default OFF)
+
+---
+
+### 🌍 Impact Tracking
+
+**Per user (and platform-wide aggregated):**
+- 🍽️ Meals rescued (bag count)
+- ⚖️ Kg of food saved (estimated: surprise bags = 1.5kg avg, specific = manual entry)
+- 💨 CO₂ saved (kg_food × 2.5)
+- 💰 Money saved (original_price - sale_price)
+
+**Display:**
+- Profile screen
+- Monthly push: "¡Salvaste 12 comidas este mes!"
+- Yearly recap (Spotify Wrapped style with Yapi)
+- Shareable Instagram story templates
+
+---
+
+### 🤝 Suspended Meals Flow
+
+1. **Donor:** Buys a bag OR donates fixed amount → marks "Quiero donar"
+2. **System:** Marks bag as "suspended" + adds to public counter
+3. **Business notified:** "Tienes 1 comida suspendida disponible"
+4. **Vendor:** When needy person arrives, taps "Despachar comida suspendida" in business app (no QR/PIN required, honor system)
+5. **System:** Marks donation as claimed, anonymous push to donor: "Tu yapa alimentó a alguien hoy 🌱"
+6. **Public counter updates:** "12,453 comidas donadas por la comunidad"
+
+**Anti-abuse:**
+- Max 5 suspended meals per business location per day
+- Admin can flag suspicious businesses
+- Random audits via admin panel
+
+---
+
+### 💳 Payment Architecture
+
+**Abstract Provider Pattern:**
+
+```python
+# apps/payments/providers/base.py
+class PaymentProvider(ABC):
+    @abstractmethod
+    def create_charge(self, order, payment_method): ...
+    
+    @abstractmethod
+    def refund(self, transaction_id, amount): ...
+    
+    @abstractmethod
+    def handle_webhook(self, payload): ...
+
+# apps/payments/providers/payphone.py
+class PayPhoneProvider(PaymentProvider): ...
+
+# apps/payments/providers/de_una.py
+class DeUnaProvider(PaymentProvider): ...
+
+# apps/payments/providers/kushki.py
+class KushkiProvider(PaymentProvider): ...  # Phase 2
+
+# apps/payments/services.py
+def process_payment(order, provider_name, payment_method):
+    provider = get_provider(provider_name)
+    return provider.create_charge(order, payment_method)
+```
+
+**Payout Workflow:**
+1. Order completed + 24h dispute window passed → credit business balance
+2. Cron job runs daily checks for due payouts (weekly Mon / monthly 1st)
+3. Generates `Payout` with `status=pending`
+4. Admin reviews + approves in admin panel
+5. CSV generated for bank upload (MVP)
+6. Admin marks as paid + uploads bank reference
+7. Business notified
+
+---
+
+### 🧪 Testing Strategy
+
+**Backend (Django):**
+- pytest + pytest-django
+- 80% coverage minimum for `apps/orders`, `apps/payments`, `apps/businesses`
+- Factory Boy for fixtures
+- Mock payment providers in tests
+- Integration tests for critical flows (signup → order → payout)
+
+**Mobile (React Native):**
+- Jest for unit tests
+- React Native Testing Library for components
+- Detox or Maestro for E2E (key flows: signup, browse, buy, pickup)
+- Storybook for design system components
+
+**Admin (Next.js):**
+- Jest + Testing Library
+- Playwright for E2E
+
+**CI/CD checks:**
+- Lint (ESLint + Ruff)
+- Type check (TypeScript + mypy)
+- Tests
+- Build success
+- Security scan (npm audit + safety)
+
+---
+
+### 🚢 Deployment & DevOps
+
+**Environments:**
+- `development` (local)
+- `staging` (Railway, separate project)
+- `production` (Railway → AWS/GCP at scale)
+
+**Docker:**
+- All services containerized
+- `docker-compose.yml` for local dev (Postgres, Redis, MailHog)
+
+**CI/CD (GitHub Actions):**
+- PR → Run tests + lint
+- Merge to `main` → Deploy to staging
+- Tagged release → Deploy to production
+- Mobile: EAS Build + EAS Submit (Expo Application Services)
+
+**Monitoring:**
+- Sentry (errors)
+- Better Stack (uptime + logs)
+- PostHog (product analytics)
+
+**Backups:**
+- Daily Postgres backups to Cloudflare R2
+- 30-day retention
+
+---
+
+### 🔒 Security & Compliance
+
+- HTTPS everywhere
+- Encrypted bank details (Fernet)
+- Rate limiting + bot protection
+- Input validation everywhere (DRF serializers + Zod on mobile)
+- SQL injection prevented (ORM)
+- XSS protected (DRF + React defaults)
+- CORS configured strictly
+- Secrets in env vars (never committed)
+- GDPR-like data export/deletion endpoints
+- Ecuador Ley Orgánica de Protección de Datos Personales (LOPDP) compliance
+- Food safety terms accepted by business at signup
+
+---
+
+### 📜 Legal Documents (Placeholders to Generate)
+
+```
+docs/legal/
+├── privacy-policy-es.md          # Política de Privacidad (LOPDP compliant)
+├── privacy-policy-en.md
+├── terms-of-service-es.md        # Términos y Condiciones
+├── terms-of-service-en.md
+├── business-agreement-es.md      # Acuerdo de Socio Comercial
+├── food-safety-terms-es.md       # Responsabilidad sobre seguridad alimentaria
+├── refund-policy-es.md
+└── cookie-policy-es.md
+```
+
+⚠️ **Note in code:** "These are placeholder templates. Have a lawyer in Ecuador review before launch."
+
+---
+
+### 📱 App Store Listing
+
+**App Name:** La Yapa  
+**Subtitle (ES):** Comida rescatada con yapa  
+**Subtitle (EN):** Rescued food, sustainable savings  
+
+**Description (ES):**
+> 🌱 La Yapa es la primera app de Ecuador para rescatar comida en buen estado a precios increíbles. Conecta con restaurantes, panaderías, supermercados, hoteles, mercados y agricultores locales que venden "bolsas sorpresa" con productos del día a 1/3 de su precio.
+>
+> ✨ ¿Por qué La Yapa?
+> • Ahorra hasta 70% en comida deliciosa
+> • Reduce el desperdicio alimentario en Ecuador
+> • Apoya negocios locales y mercados tradicionales
+> • Comida suspendida: dona una comida para quien lo necesite
+> • Rastrea tu impacto: comidas rescatadas, CO₂ evitado, dinero ahorrado
+> • Gana logros con Yapi, tu compañero de aventura
+>
+> Únete a la comunidad que está rescatando el planeta, una yapa a la vez. 🦙🌎
+
+**Keywords (ES):** comida, ecuador, descuento, sustentable, eco, restaurantes, ahorro, desperdicio, cuenca, food, mercados  
+
+**Categories:** Food & Drink (primary), Lifestyle (secondary)
+
+---
+
+### 📅 Phased Development Roadmap (3-5 months)
+
+#### **Phase 0 — Foundation (Week 1-2)**
+- Monorepo setup (Turborepo + pnpm)
+- Backend project (Django + DRF + Postgres + Docker)
+- Mobile project (Expo + design system + theme)
+- Admin project (Next.js scaffolding)
+- CI/CD basic setup
+- Design system implementation (colors, typography, components)
+- Logo + Yapi mascot illustrations (placeholder, refine later)
+- Database models + migrations
+- Authentication (email + Google + Apple)
+
+#### **Phase 1 — Consumer Core MVP (Weeks 3-6)**
+- Browse bags (list + map view)
+- Filters (dietary, allergens, distance, price)
+- Bag detail screen
+- Favorites
+- Checkout flow (PayPhone + DeUna)
+- Order management (pending → ready → completed)
+- QR + PIN pickup
+- Reviews (stars + optional comment)
+- Push notifications (Expo)
+- Profile + settings
+- i18n (ES + EN)
+
+#### **Phase 2 — Business Core MVP (Weeks 7-9)**
+- Business onboarding (formal + informal tiers)
+- Business mobile app (bag CRUD, order management, scanner)
+- Sales rep admin flow (create businesses)
+- Manual approval workflow in admin panel
+- Payout balance calculation
+- Business analytics (basic)
+
+#### **Phase 3 — Admin & Operations (Weeks 10-11)**
+- Admin dashboard (Next.js)
+- Business approval queue
+- Payout approval + CSV export
+- Dispute management
+- User management
+- Platform analytics
+
+#### **Phase 4 — Community & Engagement (Weeks 12-14)**
+- Suspended meals (donate + dispatch)
+- Gamification (badges, levels, XP)
+- Impact tracker (personal + platform-wide)
+- Leaderboards
+- Referral program
+
+#### **Phase 5 — Polish & Launch (Weeks 15-18)**
+- Electronic invoicing integration (Dátil/Contífico)
+- Performance optimization
+- E2E testing
+- App Store + Play Store submission
+- Beta testing in Cuenca (50 users + 10 businesses)
+- Marketing site (landing page)
+- Press kit + launch campaign
+
+#### **Phase 6 — Post-Launch (Months 5-6+)**
+- Loyalty program
+- In-app chat with business
+- Kushki integration (Apple/Google Pay)
+- Sales rep individual logins + attribution
+- "La Yapa Plus" subscription
+- Ad placements
+- City expansion (Quito, Guayaquil)
+
+---
+
+### ✅ Definition of Done for MVP
+
+- [ ] Consumer can register, login, browse, buy, and pickup a bag end-to-end
+- [ ] Business can register, get approved, post bags, receive orders, confirm pickup
+- [ ] Admin can approve businesses, process payouts, manage disputes
+- [ ] Payment via PayPhone + DeUna works in production
+- [ ] Push notifications work on iOS + Android
+- [ ] Map shows nearby bags within 3km
+- [ ] Suspended meals can be donated + dispatched
+- [ ] Reviews + ratings functional
+- [ ] Impact tracker shows personal stats
+- [ ] Dark mode + light mode work
+- [ ] ES + EN translations complete for core flows
+- [ ] All legal docs in place
+- [ ] App approved on App Store + Play Store
+- [ ] Sentry capturing errors
+- [ ] At least 80% test coverage on payments + orders
+- [ ] Privacy policy + terms accessible in app
+
+---
+
+## 📄 PART 2 — MODULAR IMPLEMENTATION PROMPTS
+
+> Use each of these AFTER feeding Part 1. Run them in order.
+
+---
+
+### 🔧 PROMPT 2.1 — Monorepo & Project Setup
+
+```
+Context: Use the La Yapa Master Vision Document as base context.
+
+Task: Set up the foundational monorepo structure for La Yapa.
+
+Requirements:
+1. Initialize pnpm workspace with Turborepo
+2. Create the apps/api (Django 5 + DRF + PostgreSQL 16)
+3. Create apps/mobile (Expo SDK 50+ with Expo Router, TypeScript)
+4. Create apps/admin (Next.js 14 with App Router, TypeScript, Tailwind)
+5. Create packages/shared-types (TypeScript types shared across apps)
+6. Create packages/ui (design tokens: colors, typography, spacing)
+7. Set up docker-compose.yml with Postgres 16, Redis, MailHog
+8. Create .github/workflows/ci.yml for lint + test on PR
+9. Create .env.example files for each app
+10. Create README.md with setup instructions
+11. Initialize git with .gitignore covering Python, Node, Expo, environment files
+
+Deliverables:
+- Working monorepo with all apps runnable locally
+- docker-compose up → postgres + redis running
+- pnpm dev → all 3 apps run in parallel
+- README documenting setup steps
+
+Tech stack confirmed:
+- pnpm 9+, Turborepo
+- Python 3.12, Django 5.x, DRF, PostgreSQL 16, Redis
+- Node 20+, Expo SDK 50+, React Native 0.74+
+- Next.js 14, Tailwind, shadcn/ui
+
+Code quality:
+- TypeScript strict mode
+- ESLint + Prettier configured
+- Python: Ruff for linting, Black for formatting, mypy for typing
+- Pre-commit hooks
+```
+
+---
+
+### 🎨 PROMPT 2.2 — Design System Implementation
+
+```
+Context: Use La Yapa Master Vision Document.
+
+Task: Implement the design system across packages/ui, mobile, and admin.
+
+Requirements:
+
+1. Color tokens (from master doc) → exported as:
+   - CSS variables for admin (Tailwind config)
+   - TypeScript constants for mobile (theme provider)
+   - Both light + dark mode
+
+2. Typography:
+   - Install Poppins, Inter, Fraunces (Google Fonts)
+   - Define type scale: h1 (32/40), h2 (24/32), h3 (20/28), body (16/24), small (14/20), caption (12/16)
+
+3. Spacing scale: 4, 8, 12, 16, 20, 24, 32, 40, 48, 64
+
+4. Border radius: sm (4), md (8), lg (12), xl (16), full (9999)
+
+5. Mobile components (using react-native + custom):
+   - Button (primary, secondary, ghost, danger; sm/md/lg sizes)
+   - Input (text, password, search, with error states)
+   - Card
+   - Badge
+   - Avatar
+   - Bottom Sheet
+   - Modal
+   - Toast
+   - Skeleton loaders
+   - Icon system (use lucide-react-native)
+
+6. Admin components (using shadcn/ui as base, customize colors)
+
+7. Yapi mascot:
+   - Create placeholder SVG illustrations for: happy, sleepy, celebrating, sad, chef, eco-warrior, with-bag
+   - Save as .svg in apps/mobile/src/assets/mascot/
+   - Note: Final illustrations to be commissioned from illustrator
+
+8. Logo:
+   - Create placeholder SVG: abstract leaf mark + "La Yapa" wordmark in Poppins Bold
+   - Variants: full color, monochrome white, monochrome dark
+
+9. Storybook setup for mobile components (optional but recommended)
+
+Deliverables:
+- packages/ui/tokens.ts with all design tokens
+- Theme provider in mobile app
+- Tailwind config in admin with custom palette
+- All base components implemented + documented
+- Placeholder Yapi + logo assets in place
+```
+
+---
+
+### 🗄️ PROMPT 2.3 — Backend Models & Migrations
+
+```
+Context: Use La Yapa Master Vision Document, specifically the Database Schema section.
+
+Task: Implement all Django models from the schema in apps/api.
+
+Requirements:
+1. Create Django apps: users, businesses, bags, orders, payments, reviews, notifications, gamification, suspended_meals, impact, geo, core
+2. Implement all models from schema with:
+   - Proper field types, constraints, indexes
+   - __str__ methods
+   - Meta classes with ordering, verbose_name
+   - Custom managers where helpful
+   - Signals for related-data updates
+3. PostGIS for location PointFields (use django.contrib.gis)
+4. Generate + run migrations
+5. Create Django admin registrations (basic, enhance later with Jazzmin/Unfold)
+6. Set up custom User model from the start (apps.users.User)
+7. Add Factory Boy factories for all models
+8. Write basic model tests (creation, validation)
+9. Seed command: python manage.py seed_demo_data → creates 5 businesses, 20 bags, 3 consumers, badges
+
+Specifics:
+- Use UUID primary keys for: Order, Bag, SuspendedMealDonation, Dispute (security)
+- Auto-generate pickup_code (4-digit) and pickup_qr_token (UUID) on Order creation
+- Validate Bag prices in clean() method (sale_price <= 0.5 * original_price, >= 1.50)
+- Encrypt Business.bank_account using django-fernet-fields or similar
+- Add updated_at to all models via TimestampedModel abstract base
+
+Deliverables:
+- All migrations applied successfully
+- python manage.py seed_demo_data works
+- Django admin shows all models
+- Tests pass: pytest apps/api/
+```
+
+---
+
+### 🔐 PROMPT 2.4 — Authentication & Authorization
+
+```
+Context: Master doc + completed Prompt 2.3.
+
+Task: Implement full auth system.
+
+Requirements:
+1. Email/password registration with email verification
+2. JWT auth via djangorestframework-simplejwt (15min access, 7d refresh)
+3. Social auth: Google + Apple (via django-allauth + dj-rest-auth)
+4. Password reset via Resend email
+5. Role-based permissions: ConsumerOnly, BusinessOwnerOnly, AdminOnly, SalesRepOnly
+6. Mobile flow:
+   - Welcome screen → Sign up / Login
+   - Email signup with verification
+   - Google sign in (use expo-auth-session)
+   - Apple sign in (use expo-apple-authentication)
+   - Onboarding: first name, language, location permission, dietary preferences
+   - Auto-detect role from User.role → redirect to consumer/business stack
+7. Endpoints:
+   - POST /api/v1/auth/register
+   - POST /api/v1/auth/login
+   - POST /api/v1/auth/google
+   - POST /api/v1/auth/apple
+   - POST /api/v1/auth/refresh
+   - POST /api/v1/auth/verify-email
+   - POST /api/v1/auth/forgot-password
+   - POST /api/v1/auth/reset-password
+   - POST /api/v1/auth/logout
+   - GET  /api/v1/users/me
+   - PATCH /api/v1/users/me
+8. Secure token storage on mobile: expo-secure-store
+9. Auto-refresh on 401 via Axios interceptor
+10. Tests for all auth flows
+
+Deliverables:
+- Full auth working end-to-end
+- Mobile auth screens implemented with design system
+- Tests cover registration, login, social, password reset
+```
+
+---
+
+### 📦 PROMPT 2.5 — Consumer App: Browse, Search, Filter
+
+```
+Context: Master doc + completed previous prompts.
+
+Task: Implement consumer-facing bag browsing experience.
+
+Requirements:
+1. Home screen with toggle: List view ↔ Map view
+2. List view:
+   - Cards showing bag image, business name, sale price, original price (strikethrough), discount %, pickup window, distance, rating
+   - Infinite scroll with React Query (TanStack Query)
+   - Pull to refresh
+3. Map view (Mapbox):
+   - Custom map style (Andean theme — request from Mapbox Studio or use light style with custom colors)
+   - Markers with bag count badge per location
+   - Tap marker → bottom sheet with location's bags
+   - User location pin
+   - Default 3km radius circle (visualized)
+4. Filters (modal):
+   - Dietary tags (multi)
+   - Allergen warnings (exclude)
+   - Price range (slider)
+   - Pickup time (today, tomorrow, this week)
+   - Distance (1km, 3km, 5km, 10km)
+   - Rating (4+, 4.5+)
+   - Sort: distance, price, rating, ending soon
+5. Search bar (Mapbox Geocoding for "near address") + text search bag titles
+6. Bag detail screen:
+   - Image carousel (for specific listings)
+   - Business info (rating, location, distance, hours)
+   - Description
+   - Dietary + allergen tags
+   - Pickup window
+   - Quantity selector (if > 1 available)
+   - "What you might get" (for surprise bags)
+   - Reviews preview
+   - Sticky CTA: "Reservar por $X.XX"
+7. Backend endpoints:
+   - GET /api/v1/consumer/bags?lat=&lng=&radius=&filters=
+   - GET /api/v1/consumer/bags/{id}
+   - GET /api/v1/consumer/bags/{id}/reviews
+
+Performance:
+- Image optimization via Cloudflare Images or Imgix
+- Cursor-based pagination
+- Cached queries with React Query
+
+Deliverables:
+- Browse + filter + map fully functional
+- Tests for filter logic + geo queries
+```
+
+---
+
+### 💳 PROMPT 2.6 — Checkout & Payments
+
+```
+Context: Master doc + previous prompts.
+
+Task: Implement checkout flow with PayPhone + DeUna.
+
+Requirements:
+1. Checkout screen:
+   - Order summary (bag, quantity, total)
+   - Pickup window confirmation
+   - Payment method selector: Tarjeta (PayPhone), DeUna
+   - "Donar como comida suspendida" toggle
+   - Terms acceptance checkbox
+   - Pay button → opens provider SDK/webview
+2. Backend payment service (abstract pattern from master doc):
+   - apps/payments/providers/base.py
+   - apps/payments/providers/payphone.py
+   - apps/payments/providers/de_una.py
+   - apps/payments/services.py — process_payment(), refund()
+3. Order creation flow:
+   - POST /api/v1/consumer/orders → creates Order with status=pending_payment
+   - POST /api/v1/payments/charge → calls provider, returns checkout URL/data
+   - Webhook handlers → update Order status=paid, generate QR + PIN
+   - On success → push notification + redirect to order detail
+4. Order detail screen:
+   - QR code (use react-native-qrcode-svg)
+   - 4-digit PIN display
+   - Pickup countdown
+   - Business location with "Get directions" (Mapbox or native)
+   - Cancellation button (only if > 1h before pickup window start)
+5. Refund logic:
+   - User cancels within 1h window → auto refund
+   - After 1h → no refund
+   - Business cancels (sold out) → auto refund + bonus credit ($1) → deducted from business payout
+6. Tests:
+   - Mock payment providers
+   - Test full happy path
+   - Test cancellation refund logic
+   - Test edge cases (failed payment, timeout)
+
+Deliverables:
+- Working checkout in staging with PayPhone + DeUna test credentials
+- Refund flow tested
+- Webhooks handle provider events correctly
+```
+
+---
+
+### 📲 PROMPT 2.7 — Pickup Flow (QR + PIN)
+
+```
+Context: Master doc + previous prompts.
+
+Task: Implement pickup confirmation system.
+
+Requirements:
+1. Consumer side:
+   - Order detail shows QR + PIN
+   - Visual countdown to pickup window
+   - "Pickup ready" notification when window opens
+   - Reminder push at 1h + 30min before window closes
+2. Business side:
+   - Active orders screen (sorted by pickup window)
+   - "Scan QR" button → opens expo-camera scanner
+   - Manual PIN entry fallback
+   - Order detail with consumer name (first name only), qty, dietary preferences
+   - "Confirm pickup" button → marks Order as completed
+3. Suspended meals dispatch:
+   - Separate "Comidas Suspendidas Disponibles: 3" badge on business dashboard
+   - "Despachar comida suspendida" button → confirms dispatch with no QR/PIN
+   - Optional vendor notes field
+4. Backend:
+   - POST /api/v1/business/orders/{id}/confirm-pickup with { qr_token | pin }
+   - Validates pickup window is active
+   - POST /api/v1/business/suspended-meals/dispatch with { donation_id, notes }
+5. Anti-fraud:
+   - PIN attempts limited to 5 per order
+   - QR token single-use
+   - Pickup only within window (±15min grace)
+
+Deliverables:
+- Full pickup flow working in both apps
+- Business can confirm via QR or PIN
+- Suspended meal dispatch works
+- Tests for fraud prevention
+```
+
+---
+
+### 🏪 PROMPT 2.8 — Business App: Onboarding + Bag Management
+
+```
+Context: Master doc + previous prompts.
+
+Task: Implement business onboarding + bag CRUD.
+
+Requirements:
+1. Business onboarding (mobile):
+   - Tier selection: "Empresa formal" or "Vendedor independiente"
+   - Formal flow: RUC, cédula, permiso de funcionamiento, ARCSA (if food), bank proof
+   - Informal flow: cédula, selfie with cédula, business photo, address, bank/DeUna
+   - Document upload via expo-image-picker (or document picker)
+   - Food safety terms acceptance
+   - Submit → status=pending → notify sales team
+2. Pending state UI:
+   - "Tu cuenta está en revisión. Te avisaremos pronto. 🌱"
+3. Approved state — Business dashboard:
+   - Today's metrics: orders, revenue, bags sold
+   - Quick actions: New bag, View orders, Analytics
+   - Yapi greeting based on time of day
+4. Bag CRUD:
+   - New bag wizard: Type (surprise/specific) → Title → Description → Photo → Quantity → Original price → Sale price (auto-suggest 1/3) → Pickup window → Dietary/allergen tags → Suspended meal eligible → Publish
+   - Edit bag (active only if not sold)
+   - Duplicate previous bag (1-tap re-list)
+   - Templates: "Pan del día", "Mix de frutas", etc. (save for reuse)
+5. Multi-location:
+   - Add/edit/disable locations
+   - Each bag belongs to a location
+6. Backend:
+   - POST /api/v1/business/onboarding
+   - POST /api/v1/business/locations
+   - CRUD /api/v1/business/bags
+   - POST /api/v1/business/bags/{id}/duplicate
+7. Validation: Bag price rules, pickup window in future, quantity > 0
+
+Deliverables:
+- Both onboarding flows work
+- Documents uploaded to R2
+- Bag CRUD fully functional
+- Templates work
+```
+
+---
+
+### 🖥️ PROMPT 2.9 — Admin Panel (Next.js)
+
+```
+Context: Master doc + previous prompts.
+
+Task: Build admin panel for sales team + admins.
+
+Requirements:
+1. Auth: Reuse JWT from API, role check (admin or sales_rep)
+2. Layout: Sidebar nav, top bar with user, breadcrumbs
+3. Pages (from master doc admin panel section)
+4. Business approval workflow:
+   - Pending queue with documents preview (PDF viewer)
+   - Approve / Reject (with reason) / Request more info
+   - Sends notification to business
+5. Payout management:
+   - Pending payouts table
+   - Bulk select → "Generate CSV" for bank upload
+   - Mark as paid → enter bank reference
+   - History with filters
+6. Dispute resolution:
+   - Open disputes queue
+   - View evidence
+   - Resolve: refund / no refund / partial
+   - Notify both parties
+7. Analytics:
+   - Charts (use Recharts or Tremor)
+   - KPIs: GMV, orders, active users, food saved kg, CO₂ saved kg, suspended meals
+   - Filter by date range, city, business type
+8. Content management:
+   - Push campaigns (compose + send)
+   - FAQ editor
+   - Banner management
+9. Sales rep flow (basic):
+   - Create business account (skip self-signup)
+   - Pre-fill business details
+   - Generate magic link → email to business owner to set password
+
+Tech:
+- Next.js 14 App Router
+- Tailwind + shadcn/ui
+- TanStack Query for API calls
+- React Hook Form + Zod
+- Recharts for visualizations
+
+Deliverables:
+- All admin pages functional
+- Business approval flow tested
+- Payout CSV generation works
+```
+
+---
+
+### 🎮 PROMPT 2.10 — Gamification, Impact, Community
+
+```
+Context: Master doc + previous prompts.
+
+Task: Implement gamification, impact tracking, suspended meals, referrals.
+
+Requirements:
+1. XP + Levels:
+   - Service: award_xp(user, action, amount)
+   - Triggers: order completed, review left, referral completed, donation
+   - Level progression with celebration animation
+2. Badges:
+   - Seed 30 badges from master doc
+   - Service: check_and_award_badges(user) → runs after each XP event
+   - Profile screen: earned + locked badges grid
+3. Impact tracker:
+   - Updated on order completion (signal)
+   - Stats: meals, kg, CO₂, money saved
+   - Beautiful UI with Yapi celebrating
+   - Share to Instagram Stories (custom template)
+4. Suspended meals:
+   - Donation flow during checkout (toggle or standalone donation $1-5)
+   - Public counter on home screen ("12,453 comidas donadas 🌱")
+   - Anonymous notifications to donor when claimed
+5. Referrals:
+   - Unique code per user (auto-generated)
+   - Share via deep link (Expo Linking + react-native-share)
+   - Both get $2 credit on referee's first purchase
+   - Track in profile: "Has invitado a X amigos"
+6. Leaderboards (optional opt-in):
+   - City + nationwide
+   - Weekly + monthly + all-time
+   - Privacy default OFF
+7. Backend:
+   - GET /api/v1/consumer/impact
+   - GET /api/v1/consumer/badges
+   - GET /api/v1/consumer/leaderboard?scope=&period=
+   - POST /api/v1/consumer/suspended-meals/donate
+   - GET /api/v1/public/suspended-meals/counter
+
+Deliverables:
+- All gamification working
+- Suspended meals end-to-end
+- Referrals with deep links
+- Beautiful impact UI
+```
+
+---
+
+### 🌐 PROMPT 2.11 — Internationalization (ES + EN)
+
+```
+Task: Add full i18n support.
+
+Requirements:
+1. Mobile: i18next + react-i18next + expo-localization
+   - Locales: es (default), en
+   - Files: apps/mobile/src/locales/es/common.json, en/common.json
+   - Translate ALL user-facing strings
+   - Language switcher in profile settings
+2. Backend: django-modeltranslation for content (badge names, FAQ, etc.)
+3. Admin: i18next for admin UI
+4. Date/number formatting based on locale
+5. RTL not required
+
+Deliverables:
+- All screens translated
+- Language switcher works without app restart
+- Backend serves translated content based on Accept-Language header
+```
+
+---
+
+### 🧪 PROMPT 2.12 — Testing, CI/CD, Deployment
+
+```
+Task: Finalize testing + deploy to Railway.
+
+Requirements:
+1. Backend tests:
+   - pytest config with coverage
+   - 80%+ on apps/orders, apps/payments
+   - Run on CI
+2. Mobile tests:
+   - Jest for utilities + hooks
+   - React Native Testing Library for components
+   - Maestro for 3 E2E flows: signup, browse-buy, business-confirm-pickup
+3. Admin tests:
+   - Playwright E2E
+4. CI/CD:
+   - PR: lint + type check + tests
+   - Merge to main: deploy backend to Railway staging
+   - Tagged release: deploy to production
+5. Mobile deployment:
+   - EAS Build for iOS + Android
+   - EAS Submit to stores
+   - Staging via EAS Update
+6. Monitoring setup:
+   - Sentry on all 3 apps
+   - PostHog events for key actions
+   - Better Stack for uptime
+7. Backup strategy:
+   - Daily Postgres dumps to R2
+   - 30-day retention
+
+Deliverables:
+- Tests passing on CI
+- Staging environment live
+- Production deployment pipeline ready
+- Monitoring dashboards configured
+```
+
+---
+
+### 📄 PROMPT 2.13 — Legal Documents & App Store Submission
+
+```
+Task: Generate legal docs + prepare store submission.
+
+Requirements:
+1. Generate placeholder legal documents in /docs/legal/:
+   - Privacy Policy (LOPDP compliant, mention Mapbox, payment providers, push tokens, analytics)
+   - Terms of Service (user obligations, refund policy, IP, disputes)
+   - Business Agreement (commission terms, food safety responsibility, payout terms)
+   - Food Safety Terms (business accepts responsibility)
+   - Cookie Policy
+2. All in Spanish + English markdown
+3. Render in-app via WebView or native markdown viewer
+4. Accessible from: settings, signup, footer
+5. App Store assets:
+   - Icon (1024x1024) — abstract leaf + "La Yapa" wordmark
+   - Screenshots (6.5" + 5.5" iPhone, Android equivalents)
+   - Preview video (optional)
+   - Description (from master doc)
+   - Keywords
+   - Categories: Food & Drink (primary), Lifestyle
+6. Compliance:
+   - App Tracking Transparency prompt (iOS)
+   - Android permissions justifications
+   - Camera (QR scan), Location (find bags), Notifications, Photos (upload)
+
+Deliverables:
+- Legal docs in repo + accessible in app
+- Store assets generated (placeholder screenshots for now)
+- Ready for TestFlight + Google Play internal testing
+```
+
+---
+
+## 📄 PART 3 — HOW TO USE THIS PROMPT PACK
+
+### Step-by-Step Workflow
+
+1. **Save Part 1** (Master Vision Doc) as `MASTER_VISION.md` in your repo root
+2. **For each implementation prompt**, paste:
+   ```
+   [Paste MASTER_VISION.md contents]
+   
+   ---
+   
+   [Paste specific Prompt 2.X]
+   ```
+3. **Recommended order:** 2.1 → 2.2 → 2.3 → 2.4 → 2.5 → 2.6 → 2.7 → 2.8 → 2.9 → 2.10 → 2.11 → 2.12 → 2.13
+4. **Between prompts:** Test, commit, deploy to staging
+5. **Use Claude Code, Cursor, or Aider** for best results
+
+### Tips for Working with the Coding Agent
+
+- After each prompt, ask the agent to summarize what was built
+- Request a "next steps" recap before moving to next prompt
+- Don't skip testing — request tests as part of each prompt deliverable
+- If you hit roadblocks, share error logs + ask for debugging help
+- Use the agent to also generate documentation as you go
+
+### Budget Reality Check (MVP first 6 months)
+
+| Item | Cost |
+|---|---|
+| Apple Developer Account | $99/year |
+| Google Play | $25 one-time |
+| Domain (layapa.app or .ec) | $10-30/year |
+| Railway (backend) | $5-25/month |
+| Mapbox | Free tier likely sufficient |
+| Resend (email) | Free tier likely sufficient |
+| Cloudflare R2 (storage) | ~$1-5/month |
+| Sentry | Free tier |
+| PostHog | Free tier |
+| Electronic invoicing (Dátil/Contífico) | $15-30/month |
+| **Total monthly** | **~$30-80/month** |
+
+---
+
+## 🦙 You're Ready to Build La Yapa!
+
+This prompt pack gives you:
+- ✅ Complete strategic vision
+- ✅ All technical decisions made
+- ✅ 13 modular implementation prompts
+- ✅ Clear phased roadmap
+- ✅ Budget transparency
+
+**Next action:** Save this document, set up your repo, and feed Prompt 2.1 to your coding agent. 
+
+¡Vamos a rescatar el Ecuador, una yapa a la vez! 🌱🇪🇨
+
+Want me to:
+1. Refine any specific section?
+2. Generate the actual content for any legal document?
+3. Sketch wireframes/screen flows in text format?
+4. Create the actual Yapi mascot description for an illustrator brief?
+5. Help draft your pitch deck for potential investors/grants?

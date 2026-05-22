@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 240" width="200" height="240" aria-label="Yapi sleepy (placeholder)">
+  <title>Yapi sleepy</title>
+  <ellipse cx="100" cy="222" rx="56" ry="6" fill="#1B2D2A" opacity="0.10"/>
+  <ellipse cx="100" cy="160" rx="62" ry="52" fill="#FAF6F0" stroke="#E5E1D8" stroke-width="2"/>
+  <path d="M 50 158 Q 100 200 150 158 L 150 188 Q 100 218 50 188 Z" fill="#D97757"/>
+  <path d="M 60 175 h 80 M 60 185 h 80" stroke="#FAF6F0" stroke-width="2" stroke-dasharray="4 4" opacity="0.7"/>
+  <rect x="72" y="200" width="14" height="22" rx="6" fill="#FAF6F0" stroke="#E5E1D8" stroke-width="2"/>
+  <rect x="114" y="200" width="14" height="22" rx="6" fill="#FAF6F0" stroke="#E5E1D8" stroke-width="2"/>
+  <rect x="90" y="80" width="20" height="60" rx="10" fill="#FAF6F0" stroke="#E5E1D8" stroke-width="2"/>
+  <ellipse cx="100" cy="62" rx="34" ry="30" fill="#FAF6F0" stroke="#E5E1D8" stroke-width="2"/>
+  <!-- Drooped ears -->
+  <path d="M 78 42 L 70 52 L 90 46 Z" fill="#FAF6F0" stroke="#E5E1D8" stroke-width="2"/>
+  <path d="M 122 42 L 130 52 L 110 46 Z" fill="#FAF6F0" stroke="#E5E1D8" stroke-width="2"/>
+  <!-- Closed eyes -->
+  <path d="M 82 62 L 94 62" stroke="#1B2D2A" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M 106 62 L 118 62" stroke="#1B2D2A" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Mouth: small "o" -->
+  <ellipse cx="100" cy="78" rx="3" ry="4" fill="#1B2D2A" opacity="0.7"/>
+  <!-- Zzz -->
+  <text x="140" y="40" font-family="Poppins, sans-serif" font-size="18" font-weight="700" fill="#6B7B78">z</text>
+  <text x="152" y="28" font-family="Poppins, sans-serif" font-size="14" font-weight="700" fill="#6B7B78">z</text>
+  <text x="160" y="18" font-family="Poppins, sans-serif" font-size="10" font-weight="700" fill="#6B7B78">z</text>
+</svg>

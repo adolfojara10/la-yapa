@@ -1,0 +1,42 @@
+# ---------- Core ----------
+Django==5.1.2
+djangorestframework==3.15.2
+django-environ==0.11.2
+django-cors-headers==4.5.0
+django-extensions==3.2.3
+django-filter==24.3
+
+# ---------- Database ----------
+psycopg[binary]==3.2.3
+
+# ---------- Auth ----------
+djangorestframework-simplejwt==5.3.1
+django-allauth==65.0.2
+dj-rest-auth==6.0.0
+
+# ---------- Async / tasks ----------
+celery==5.4.0
+redis==5.1.1
+django-redis==5.4.0
+
+# ---------- Admin UI ----------
+django-unfold==0.39.0
+
+# ---------- i18n ----------
+django-modeltranslation==0.19.10
+
+# ---------- Storage ----------
+django-storages[boto3]==1.14.4
+
+# ---------- Server ----------
+gunicorn==23.0.0
+whitenoise==6.7.0
+
+# ---------- Email ----------
+# Uses Django's SMTP backend → MailHog in dev, Resend in prod via SMTP
+
+# ---------- Observability ----------
+sentry-sdk==2.16.0
+
+# ---------- API docs ----------
+drf-spectacular==0.27.2

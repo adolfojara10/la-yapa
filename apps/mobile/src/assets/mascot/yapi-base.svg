@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Yapi — base body (placeholder).
+  Replace with final illustrator artwork. All variants below extend this base.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 240" width="200" height="240" aria-label="Yapi (placeholder)">
+  <title>Yapi base placeholder</title>
+  <!-- Ground shadow -->
+  <ellipse cx="100" cy="222" rx="56" ry="6" fill="#1B2D2A" opacity="0.10"/>
+  <!-- Body -->
+  <ellipse cx="100" cy="160" rx="62" ry="52" fill="#FAF6F0" stroke="#E5E1D8" stroke-width="2"/>
+  <!-- Poncho -->
+  <path d="M 50 158 Q 100 200 150 158 L 150 188 Q 100 218 50 188 Z" fill="#D97757"/>
+  <path d="M 60 175 h 80 M 60 185 h 80" stroke="#FAF6F0" stroke-width="2" stroke-dasharray="4 4" opacity="0.7"/>
+  <!-- Legs -->
+  <rect x="72" y="200" width="14" height="22" rx="6" fill="#FAF6F0" stroke="#E5E1D8" stroke-width="2"/>
+  <rect x="114" y="200" width="14" height="22" rx="6" fill="#FAF6F0" stroke="#E5E1D8" stroke-width="2"/>
+  <!-- Neck -->
+  <rect x="90" y="80" width="20" height="60" rx="10" fill="#FAF6F0" stroke="#E5E1D8" stroke-width="2"/>
+  <!-- Head -->
+  <ellipse cx="100" cy="62" rx="34" ry="30" fill="#FAF6F0" stroke="#E5E1D8" stroke-width="2"/>
+  <!-- Ears -->
+  <path d="M 78 42 L 72 22 L 88 38 Z" fill="#FAF6F0" stroke="#E5E1D8" stroke-width="2"/>
+  <path d="M 122 42 L 128 22 L 112 38 Z" fill="#FAF6F0" stroke="#E5E1D8" stroke-width="2"/>
+  <!-- Eyes (default: happy) -->
+  <circle cx="88" cy="62" r="3" fill="#1B2D2A"/>
+  <circle cx="112" cy="62" r="3" fill="#1B2D2A"/>
+  <!-- Cheeks -->
+  <circle cx="80" cy="72" r="4" fill="#D97757" opacity="0.35"/>
+  <circle cx="120" cy="72" r="4" fill="#D97757" opacity="0.35"/>
+  <!-- Mouth (gentle smile) -->
+  <path d="M 92 76 Q 100 82 108 76" stroke="#1B2D2A" stroke-width="2" stroke-linecap="round" fill="none"/>
+</svg>

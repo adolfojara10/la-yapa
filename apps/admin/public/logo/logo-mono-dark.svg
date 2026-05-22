@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 100" width="360" height="100" aria-label="La Yapa">
+  <title>La Yapa (monochrome dark)</title>
+  <g transform="translate(8 12)">
+    <path d="M 38 8 C 18 8 4 30 4 52 C 4 64 14 72 28 72 C 50 72 72 50 72 28 C 72 16 60 8 38 8 Z"
+          fill="#1B2D2A"/>
+    <path d="M 14 60 L 30 36 L 40 50 L 52 28 L 68 60 Z" fill="#FFFFFF"/>
+    <path d="M 18 64 Q 36 36 64 16" stroke="#FFFFFF" stroke-width="2" fill="none" stroke-linecap="round"/>
+  </g>
+  <text x="100" y="62"
+        font-family="Poppins, system-ui, sans-serif"
+        font-size="44"
+        font-weight="700"
+        fill="#1B2D2A"
+        letter-spacing="-0.5">La Yapa</text>
+</svg>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80" aria-label="La Yapa mark">
+  <title>La Yapa mark</title>
+  <path d="M 42 8 C 22 8 8 30 8 52 C 8 64 18 72 32 72 C 54 72 76 50 76 28 C 76 16 64 8 42 8 Z"
+        fill="#2D6A4F"/>
+  <path d="M 18 60 L 34 36 L 44 50 L 56 28 L 72 60 Z" fill="#FAF6F0"/>
+  <path d="M 22 64 Q 40 36 68 16" stroke="#FAF6F0" stroke-width="2" fill="none" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,110 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ------------------------------------------------------------------
+   Design tokens — CSS variables (must mirror @layapa/ui tokens.ts).
+   Generated values come from `generateCssVariables()`; pasted here so
+   the stylesheet stays static-analyzable.
+   ------------------------------------------------------------------ */
+
+:root {
+  --color-background: #faf6f0;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f3eee5;
+  --color-overlay: rgba(27, 45, 42, 0.55);
+
+  --color-border: #e5e1d8;
+  --color-border-strong: #c9c2b3;
+
+  --color-text: #1b2d2a;
+  --color-text-muted: #6b7b78;
+  --color-text-inverse: #ffffff;
+  --color-text-on-primary: #ffffff;
+
+  --color-primary: #2d6a4f;
+  --color-primary-hover: #26583f;
+  --color-primary-active: #1f4634;
+  --color-primary-soft: #dce9e1;
+
+  --color-secondary: #d97757;
+  --color-secondary-hover: #c46647;
+  --color-secondary-soft: #f5dace;
+
+  --color-accent: #f4c430;
+  --color-accent-soft: #fbe9a6;
+
+  --color-success: #52b788;
+  --color-success-soft: #d6efe0;
+  --color-warning: #f4a261;
+  --color-warning-soft: #fbe3cc;
+  --color-error: #c44536;
+  --color-error-soft: #f1cfc9;
+  --color-info: #4a90e2;
+  --color-info-soft: #d2e2f4;
+
+  --color-focus-ring: #2d6a4f;
+}
+
+.dark,
+[data-theme='dark'] {
+  --color-background: #0f1a18;
+  --color-surface: #1a2a26;
+  --color-surface-muted: #22332f;
+  --color-overlay: rgba(0, 0, 0, 0.65);
+
+  --color-border: #2a3d38;
+  --color-border-strong: #3a4f49;
+
+  --color-text: #e8e5de;
+  --color-text-muted: #9ba8a4;
+  --color-text-inverse: #1b2d2a;
+  --color-text-on-primary: #e8e5de;
+
+  --color-primary: #4f9275;
+  --color-primary-hover: #5fa585;
+  --color-primary-active: #6fb995;
+  --color-primary-soft: #1f3a2e;
+
+  --color-secondary: #e08b6f;
+  --color-secondary-hover: #e89a82;
+  --color-secondary-soft: #3a2620;
+
+  --color-accent: #f4c430;
+  --color-accent-soft: #3a3320;
+
+  --color-success: #52b788;
+  --color-success-soft: #1f3a2a;
+  --color-warning: #f4a261;
+  --color-warning-soft: #3a2a1c;
+  --color-error: #d4604f;
+  --color-error-soft: #3a1f1a;
+  --color-info: #6ba7e8;
+  --color-info-soft: #1a2a3a;
+
+  --color-focus-ring: #5fa585;
+}
+
+@layer base {
+  html {
+    color-scheme: light dark;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-heading;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
+}

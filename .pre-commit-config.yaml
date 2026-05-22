@@ -1,0 +1,32 @@
+# Optional Python-focused pre-commit (run inside apps/api/.venv):
+#   pip install pre-commit && pre-commit install
+#
+# Husky + lint-staged already covers the same Python files via Node, so this
+# is provided for contributors who prefer the Python pre-commit toolchain.
+
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.9
+    hooks:
+      - id: ruff
+        args: [--fix]
+        files: ^apps/api/.*\.py$
+      - id: ruff-format
+        files: ^apps/api/.*\.py$
+
+  - repo: https://github.com/psf/black
+    rev: 24.10.0
+    hooks:
+      - id: black
+        files: ^apps/api/.*\.py$
+        language_version: python3.12
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        args: [--maxkb=1000]
+      - id: detect-private-key

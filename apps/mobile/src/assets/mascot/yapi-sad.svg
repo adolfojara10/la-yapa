@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 240" width="200" height="240" aria-label="Yapi sad (placeholder)">
+  <title>Yapi sad</title>
+  <ellipse cx="100" cy="222" rx="56" ry="6" fill="#1B2D2A" opacity="0.10"/>
+  <ellipse cx="100" cy="160" rx="62" ry="52" fill="#FAF6F0" stroke="#E5E1D8" stroke-width="2"/>
+  <path d="M 50 158 Q 100 200 150 158 L 150 188 Q 100 218 50 188 Z" fill="#D97757"/>
+  <path d="M 60 175 h 80 M 60 185 h 80" stroke="#FAF6F0" stroke-width="2" stroke-dasharray="4 4" opacity="0.7"/>
+  <rect x="72" y="200" width="14" height="22" rx="6" fill="#FAF6F0" stroke="#E5E1D8" stroke-width="2"/>
+  <rect x="114" y="200" width="14" height="22" rx="6" fill="#FAF6F0" stroke="#E5E1D8" stroke-width="2"/>
+  <rect x="90" y="80" width="20" height="60" rx="10" fill="#FAF6F0" stroke="#E5E1D8" stroke-width="2"/>
+  <ellipse cx="100" cy="62" rx="34" ry="30" fill="#FAF6F0" stroke="#E5E1D8" stroke-width="2"/>
+  <!-- Drooped ears -->
+  <path d="M 78 42 L 70 52 L 90 46 Z" fill="#FAF6F0" stroke="#E5E1D8" stroke-width="2"/>
+  <path d="M 122 42 L 130 52 L 110 46 Z" fill="#FAF6F0" stroke="#E5E1D8" stroke-width="2"/>
+  <!-- Sad eyes -->
+  <circle cx="88" cy="62" r="3" fill="#1B2D2A"/>
+  <circle cx="112" cy="62" r="3" fill="#1B2D2A"/>
+  <!-- Tear -->
+  <path d="M 90 68 Q 88 76 92 78 Q 96 76 94 68 Z" fill="#4A90E2" opacity="0.7"/>
+  <!-- Frown -->
+  <path d="M 92 82 Q 100 74 108 82" stroke="#1B2D2A" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+</svg>
