@@ -20,10 +20,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Reads pnpm version from package.json#packageManager so it stays in sync.
       - name: Install pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 9
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

@@ -21,6 +21,7 @@ select = [
     "F",    # Pyflakes
     "I",    # isort
     "B",    # flake8-bugbear
+    "BLE",  # flake8-blind-except
     "C4",   # flake8-comprehensions
     "DJ",   # flake8-django
     "UP",   # pyupgrade
@@ -28,8 +29,9 @@ select = [
     "RUF",  # Ruff-specific
 ]
 ignore = [
-    "E501",  # line too long (Black handles)
-    "B008",  # function call in argument defaults (DRF/Django pattern)
+    "E501",   # line too long (Black handles)
+    "B008",   # function call in argument defaults (DRF/Django pattern)
+    "RUF012", # mutable class attrs without ClassVar — Django models/Meta use plain lists
 ]
 
 [tool.ruff.lint.per-file-ignores]
