@@ -54,7 +54,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:16-alpine
+        image: postgis/postgis:16-3.4-alpine
         env:
           POSTGRES_DB: layapa_test
           POSTGRES_USER: layapa
@@ -108,7 +108,7 @@ jobs:
         run: black --check .
 
       - name: mypy (type check)
-        run: mypy . || true   # allow soft fail until stubs are wired
+        run: mypy . || true # allow soft fail until stubs are wired
 
       - name: pytest
         run: pytest

@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgis/postgis:16-3.4-alpine
     container_name: layapa-postgres
     restart: unless-stopped
     environment:
@@ -8,11 +8,11 @@ services:
       POSTGRES_USER: layapa
       POSTGRES_PASSWORD: layapa
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U layapa -d layapa"]
+      test: ['CMD-SHELL', 'pg_isready -U layapa -d layapa']
       interval: 5s
       timeout: 5s
       retries: 5
@@ -22,11 +22,11 @@ services:
     container_name: layapa-redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - '6379:6379'
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 5s
       timeout: 3s
       retries: 5
@@ -36,8 +36,8 @@ services:
     container_name: layapa-mailhog
     restart: unless-stopped
     ports:
-      - "1025:1025"   # SMTP
-      - "8025:8025"   # Web UI → http://localhost:8025
+      - '1025:1025' # SMTP
+      - '8025:8025' # Web UI → http://localhost:8025
 
   # Optional: run the API in Docker too. Uncomment if you prefer not to use a local venv.
   # api:

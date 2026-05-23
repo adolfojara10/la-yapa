@@ -31,6 +31,7 @@ DJANGO_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.gis",
 ]
 
 THIRD_PARTY_APPS = [
@@ -40,11 +41,24 @@ THIRD_PARTY_APPS = [
     "django_filters",
     "django_extensions",
     "drf_spectacular",
+    "encrypted_model_fields",
 ]
 
 LOCAL_APPS = [
     "apps.core",
     "apps.users",
+    "apps.geo",
+    "apps.businesses",
+    "apps.bags",
+    "apps.orders",
+    "apps.payments",
+    "apps.reviews",
+    "apps.notifications",
+    "apps.gamification",
+    "apps.suspended_meals",
+    "apps.impact",
+    "apps.sales",
+    "apps.ads",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -84,13 +98,16 @@ TEMPLATES = [
 ]
 
 # ---------- Database ----------
+# Use PostGIS in dev/prod so GeoDjango (PointField, distance lookups) works.
+# Tests override to sqlite via config.settings.test.
 DATABASES = {
     "default": env.db(
         "DATABASE_URL",
-        default="postgres://layapa:layapa@localhost:5432/layapa",
+        default="postgis://layapa:layapa@localhost:5432/layapa",
     ),
 }
 DATABASES["default"]["ATOMIC_REQUESTS"] = True
+DATABASES["default"]["ENGINE"] = "django.contrib.gis.db.backends.postgis"
 
 # ---------- Cache / Redis ----------
 REDIS_URL = env("REDIS_URL", default="redis://localhost:6379/0")
@@ -168,6 +185,17 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # ---------- Default PK ----------
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# ---------- Encryption (Fernet symmetric key for encrypted_model_fields) ----------
+# Generate with: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+# Use a real value via env in prod.
+# NOTE: This dev-only key is committed because dev DB content is throwaway.
+# Generate a real one for prod with:
+#   python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+FIELD_ENCRYPTION_KEY = env(
+    "FIELD_ENCRYPTION_KEY",
+    default="r9ekbzWb0qFttGmJQN05W_u3cedAnRWvKSMmf3DeFCo=",
+)
 
 # ---------- Email ----------
 EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.smtp.EmailBackend")
