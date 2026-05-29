@@ -46,20 +46,108 @@ la-yapa/
 
 ## ✅ Prerequisites
 
-Install these once on your machine:
+The repo is supported on **macOS 13+** and **Ubuntu 22.04 / 24.04 LTS**.
+Other Linux distros will likely work but aren't tested by CI.
 
-| Tool     | Version | Install                                                           |
-| -------- | ------- | ----------------------------------------------------------------- |
-| Node.js  | ≥ 20    | `brew install node` or [nvm](https://github.com/nvm-sh/nvm)       |
-| pnpm     | ≥ 9     | `npm install -g pnpm` or `brew install pnpm`                      |
-| Python   | 3.12    | `brew install python@3.12`                                        |
-| Docker   | latest  | [Docker Desktop](https://www.docker.com/products/docker-desktop/) |
-| Watchman | latest  | `brew install watchman` (recommended for Expo)                    |
+You need the following versions installed before running `pnpm install`:
+
+| Tool     | Version | Notes                                                  |
+| -------- | ------- | ------------------------------------------------------ |
+| Node.js  | ≥ 20    | LTS required (matches CI)                              |
+| pnpm     | ≥ 9     | Managed by `corepack` — don't install via npm globally |
+| Python   | 3.12    | Exact 3.12.x; Django + stubs are pinned                |
+| Docker   | latest  | Engine + Compose v2 plugin                             |
+| Watchman | latest  | Optional on Linux, recommended on macOS                |
 
 Optional (only if you want native iOS/Android builds):
 
-- Xcode 15+ (iOS)
+- Xcode 15+ (iOS, macOS only)
 - Android Studio + JDK 17 (Android)
+
+---
+
+### 🍎 macOS (Homebrew)
+
+```bash
+# Install Homebrew first if needed: https://brew.sh
+
+brew install node@20 pnpm python@3.12 watchman
+brew install --cask docker          # Docker Desktop
+
+corepack enable                     # pins pnpm to the repo's packageManager
+```
+
+Launch Docker Desktop once and let it finish starting before running
+`docker compose up`. If you juggle Node versions across projects, install
+[nvm](https://github.com/nvm-sh/nvm) instead of `node@20`.
+
+---
+
+### 🐧 Ubuntu 22.04 / 24.04 LTS
+
+```bash
+# --- System packages ---
+sudo apt update
+sudo apt install -y build-essential curl git ca-certificates gnupg \
+                    libpq-dev pkg-config lsb-release
+
+# --- Node.js 20 (NodeSource — apt's default is too old) ---
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+
+# --- pnpm via corepack (ships with Node 20) ---
+sudo corepack enable
+
+# --- Python 3.12 ---
+# Ubuntu 24.04: already in apt
+sudo apt install -y python3.12 python3.12-venv python3.12-dev
+# Ubuntu 22.04 only: enable deadsnakes first
+#   sudo add-apt-repository ppa:deadsnakes/ppa && sudo apt update
+#   sudo apt install -y python3.12 python3.12-venv python3.12-dev
+
+# --- Docker Engine + Compose plugin (official repo) ---
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
+  | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+  https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
+  | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
+sudo apt update
+sudo apt install -y docker-ce docker-ce-cli containerd.io \
+                    docker-buildx-plugin docker-compose-plugin
+
+# Run docker without sudo (log out + back in, or run `newgrp docker`)
+sudo usermod -aG docker $USER
+
+# --- Raise inotify limits so Expo / Metro doesn't crash on file watches ---
+echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf
+sudo sysctl -p
+```
+
+Notes / gotchas on Linux:
+
+- **Watchman** has no apt package and building from source is heavy. Skip it
+  — Expo falls back to polling, which is fine for typical sessions. If you
+  hit Metro file-watching issues, install it via
+  [Homebrew on Linux](https://docs.brew.sh/Homebrew-on-Linux).
+- **Docker group**: `usermod -aG docker $USER` only takes effect after a new
+  login shell. Use `newgrp docker` to apply it in the current terminal.
+- **`libpq-dev` + `pkg-config`** aren't strictly required (the `psycopg`
+  wheel is binary) but prevent surprises if pip ever falls back to a source
+  build.
+- **Docker Desktop for Linux** also works if you prefer it over Engine — but
+  Engine is lighter and what most contributors use.
+
+---
+
+### 🔎 Verify your install
+
+```bash
+node -v               # v20.x
+pnpm -v               # 9.x
+python3.12 --version  # Python 3.12.x
+docker compose version
+```
 
 ---
 

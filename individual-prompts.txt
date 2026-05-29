@@ -49,7 +49,7 @@ Code quality:
 ### 🎨 PROMPT 2.2 — Design System Implementation
 
 ```
-Context: Use La Yapa Master Vision Document.
+Context: Use La Yapa Master_Vision.md file as base context.
 
 Task: Implement the design system across packages/ui, mobile, and admin.
 
@@ -106,7 +106,7 @@ Deliverables:
 ### 🗄️ PROMPT 2.3 — Backend Models & Migrations
 
 ```
-Context: Use La Yapa Master Vision Document, specifically the Database Schema section.
+Context: Use La Yapa Master_Vision.md AND PROGRESS.md Document, specifically the Database Schema section.
 
 Task: Implement all Django models from the schema in apps/api.
 
