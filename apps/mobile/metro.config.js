@@ -1,11 +1,9 @@
-// Metro config tuned for pnpm monorepos + SVG-as-component imports.
-const path = require('path');
+// Metro config: SVG-as-component imports.
+// pnpm workspace resolution is handled by .npmrc (`node-linker=hoisted`),
+// so no custom watchFolders / nodeModulesPaths are needed here.
 const { getDefaultConfig } = require('expo/metro-config');
 
-const projectRoot = __dirname;
-const workspaceRoot = path.resolve(projectRoot, '../..');
-
-const config = getDefaultConfig(projectRoot);
+const config = getDefaultConfig(__dirname);
 
 // ---------- SVG as React components ----------
 config.transformer = {
