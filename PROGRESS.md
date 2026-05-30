@@ -10,20 +10,20 @@ future work. Update at the end of every session.
 
 ## 🔭 Current state (at a glance)
 
-| Layer                                 | Status               | Notes                                                                                            |
-| ------------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------ |
-| Monorepo (pnpm + Turborepo)           | ✅ Working           | `pnpm install` clean, lockfile committed                                                         |
-| CI (GitHub Actions)                   | ✅ Green             | JS job + Django job (PostGIS + Redis service containers)                                         |
-| Pre-commit hooks                      | ✅ Working           | Husky → Prettier on JS/MD; Python via separate `pre-commit`                                      |
-| Design system (`@layapa/ui`)          | ✅ v1                | Tokens single-source, light/dark, type scale, motion                                             |
-| Mobile (Expo SDK 54)                  | ✅ Scaffold          | Theme + 11 components + `/design-system` + Yapi/Logo SVGs · **dev build required (not Expo Go)** |
-| Admin (Next.js 14)                    | ✅ Scaffold          | Tailwind + next-themes + 8 shadcn-style primitives + showcase page                               |
-| Django API (`apps/api`)               | ✅ Data layer        | 28 models · 23 migrations · 17 tests · 92% coverage · seed command                               |
-| DRF endpoints                         | ⏳ Health-check only | Domain endpoints next                                                                            |
-| Auth (JWT + social)                   | ⏳ Scaffolded        | `simplejwt` wired; allauth installed, not configured                                             |
-| Mobile features (auth, browse, order) | ⏳ Not started       |                                                                                                  |
-| Admin features (approvals, payouts)   | ⏳ Not started       |                                                                                                  |
-| Real Yapi artwork                     | ⏳ Placeholder SVGs  | Awaiting illustrator commission                                                                  |
+| Layer                                 | Status               | Notes                                                                                                                                 |
+| ------------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Monorepo (pnpm + Turborepo)           | ✅ Working           | `pnpm install` clean, lockfile committed                                                                                              |
+| CI (GitHub Actions)                   | ✅ Green             | JS job + Django job (PostGIS + Redis service containers)                                                                              |
+| Pre-commit hooks                      | ✅ Working           | Husky → Prettier on JS/MD; Python via separate `pre-commit`                                                                           |
+| Design system (`@layapa/ui`)          | ✅ v1                | Tokens single-source, light/dark, type scale, motion                                                                                  |
+| Mobile (Expo SDK 54)                  | ✅ Scaffold          | Theme + 11 components + `/design-system` + Yapi/Logo SVGs · Android dev client building on Linux (JDK 17 + ninja + Metro React-dedup) |
+| Admin (Next.js 14)                    | ✅ Scaffold          | Tailwind + next-themes + 8 shadcn-style primitives + showcase page                                                                    |
+| Django API (`apps/api`)               | ✅ Data layer        | 28 models · 23 migrations · 17 tests · 92% coverage · seed command                                                                    |
+| DRF endpoints                         | ⏳ Health-check only | Domain endpoints next                                                                                                                 |
+| Auth (JWT + social)                   | ⏳ Scaffolded        | `simplejwt` wired; allauth installed, not configured                                                                                  |
+| Mobile features (auth, browse, order) | ⏳ Not started       |                                                                                                                                       |
+| Admin features (approvals, payouts)   | ⏳ Not started       |                                                                                                                                       |
+| Real Yapi artwork                     | ⏳ Placeholder SVGs  | Awaiting illustrator commission                                                                                                       |
 
 ---
 
@@ -191,6 +191,82 @@ gamification · suspended_meals · impact · sales · ads · geo · core`.
 
 ---
 
+### Session 5 — Android dev client unblocked (Linux)
+
+**Built / changed**
+
+- **JDK 17 + ninja installed** on the dev machine
+  (`sudo apt install openjdk-17-jdk ninja-build`);
+  `JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64` exported in `~/.bashrc`.
+  RN 0.81 / AGP 8.x cannot build under JRE 8;
+  `react-native-worklets` CMake config requires Ninja on PATH.
+- **`expo run:android` first build succeeded** against a booted emulator
+  (`emulator-5554`); APK installed.
+- **`apps/mobile/metro.config.js`** — added `extraNodeModules` +
+  `resolveRequest` redirects forcing `react` and `react-dom` imports to
+  resolve to `<workspace-root>/node_modules/react` (and `react-dom`). Fixes
+  the "Invalid hook call / Cannot read property 'useEffect' of null" at
+  `_layout.tsx:61` (`QueryClientProvider`) caused by
+  `@tanstack/react-query` resolving to a pnpm-nested `react@18.3.1` while
+  the rest of the bundle uses root-hoisted `react@19.1.0`. Mobile-only —
+  admin (Next 14) still resolves React 18 normally.
+- **`AGENTS.md` §4** updated with JDK 17 prerequisite
+  (`sudo apt install openjdk-17-jdk` + `JAVA_HOME` export).
+- **`AGENTS.md` §5** documents the metro-config React redirect so future
+  contributors don't revert it.
+- **`checklist.md`** added at repo root — manual QA runbook keyed to
+  roadmap sessions, with `🔒` markers for unbuilt features.
+
+**Mobile dev-client smoke checklist** (validates the dedup fix end-to-end
+on the device — run after a fresh `expo start -c`):
+
+- [ ] App launches without red box (proves React dedup worked)
+- [ ] Splash hides cleanly after Google Fonts load
+- [ ] Status bar adapts to light/dark theme
+- [ ] Fast Refresh works (edit a string in `app/index.tsx`, see it update)
+- [ ] Logo + Mascot SVGs render (proves `react-native-svg-transformer` path)
+- [ ] Navigation to `/design-system` works (expo-router)
+- [ ] Theme toggle button switches all themed surfaces
+- [ ] Buttons (all 7 variants + 3 sizes) press states animate (Reanimated 4 worklets)
+- [ ] Inputs accept text, password eye-toggle works, search variant renders icon
+- [ ] Skeleton shimmer animates (worklet path)
+- [ ] Modal opens with backdrop, dismisses cleanly
+- [ ] **BottomSheet opens, drags between snap points (40%/85%), closes** —
+      highest-value test; proves `@gorhom/bottom-sheet` + Reanimated 4 +
+      gesture-handler + new arch all wire together
+- [ ] Toast slides in, auto-dismisses, queues
+
+**Decisions**
+
+- **JDK via apt over Temurin** — one command, no extra repo, auto-updates
+  via `apt`.
+- **`JAVA_HOME` per-shell in `~/.bashrc`** (not system-wide
+  `update-alternatives`) — leaves system defaults alone for anything else
+  that may depend on JRE 8.
+- **Metro resolver redirect over pnpm `overrides`** — admin (Next 14)
+  genuinely needs React 18 and mobile (RN 0.81) needs React 19. They must
+  coexist in the workspace; per-app bundlers isolate. A workspace-wide
+  override would break admin.
+- **Don't clear `~/.gradle/caches`** unless a stale-plugin error surfaces.
+  The cache survives the JDK switch cleanly in practice.
+
+**Caveats**
+
+- **Runtime fix is assumed-valid until the smoke checklist above passes.**
+  Native build succeeded; the React-dedup redirect was applied after the
+  APK was installed, so a fresh `expo start -c` is required to validate.
+- **`cmdline-tools` is emitting "SDK XML v4" warnings** — benign for now
+  (build completed past them), but a sign cmdline-tools is older than the
+  installed SDK packages. Update cmdline-tools next time something fails
+  around `sdkmanager`.
+- **`AndroidManifest.xml` package-attribute warnings** from
+  `@react-native-async-storage/async-storage` and
+  `react-native-safe-area-context` — upstream lib issues, not ours; AGP
+  ignores the value cleanly.
+- **iOS still deferred** (no Mac, no paid Apple Developer account).
+
+---
+
 ## 🎯 Next-up priorities
 
 ### Phase 1 — Consumer Core MVP (Weeks 3-6 of the master roadmap)
@@ -229,9 +305,9 @@ gamification · suspended_meals · impact · sales · ads · geo · core`.
 
 ### Cross-cutting / infra debt
 
-- [ ] **Install Android Studio + SDK + AVD on dev machine** so
+- [x] **Install Android Studio + SDK + AVD on dev machine** so
       `expo run:android` works; that's the inner loop for mobile until iOS
-      is unblocked.
+      is unblocked. _(Session 5: JDK 17 + ninja + emulator green; first build succeeds.)_
 - [ ] **Provision Apple Developer account ($99/yr) + EAS Build profile**
       for iOS device testing once mobile features stabilize.
 - [ ] Add `python manage.py makemigrations --check --dry-run` to CI.
@@ -271,3 +347,5 @@ Dependencies:     ~1500 npm packages, ~120 Python packages (with dev extras)
 - [`packages/ui/README.md`](./packages/ui/README.md) — design-system usage.
 - `apps/api/config/settings/base.py` — canonical Django settings.
 - `apps/api/apps/*/models.py` — domain models (source of truth for fields).
+- [`checklist.md`](./checklist.md) — manual QA runbook (session-by-session,
+  `🔒` markers for features not yet built).

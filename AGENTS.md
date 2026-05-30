@@ -152,6 +152,11 @@ versions are newer than the public Expo Go binary supports.
 
 ```bash
 # One-time prerequisites:
+#   - JDK 17 (Ubuntu: `sudo apt install openjdk-17-jdk`). RN 0.81 / AGP 8.x
+#       require JDK 17 specifically — JRE 8 fails with "No Java compiler found"
+#       and JDK 21+ is not yet supported by AGP. Export JAVA_HOME in ~/.bashrc:
+#         export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+#         export PATH="$JAVA_HOME/bin:$PATH"
 #   - Android Studio + Platform Tools (sdkmanager, adb)
 #   - ANDROID_HOME exported, ~/Android/Sdk/platform-tools in PATH
 #   - Either an emulator (AVD) booted OR a USB device with USB-debugging on
@@ -205,17 +210,18 @@ payments) either stub out or render incorrectly.
 
 These trip up agents repeatedly. **Don't "fix" them.**
 
-| Pattern                                                                              | Why                                                                                                                                                |
-| ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `apps/mobile/metro.config.js` uses CommonJS (`require`, `__dirname`)                 | Metro requires CJS for the resolver config. ESLint override handles it.                                                                            |
-| `apps/api/apps/users/models.py` has `REQUIRED_FIELDS = ["username"]` as a plain list | Django framework attribute, not a typo. Ruff's `RUF012` is globally suppressed in `pyproject.toml`.                                                |
-| `# noqa: BLE001` on `except Exception:` in `core/views.py` health check              | Health checks must always return — broad except is intentional.                                                                                    |
-| `apps/admin/tailwind.config.ts` uses `var(--color-…)` not channel triplets           | Single-source tokens, no preprocessing. Opacity utilities (`bg-primary/50`) won't work — that's a documented trade-off in `packages/ui/README.md`. |
-| Bag `save()` calls `self.full_clean()`                                               | Enforces price validation at the model layer, not just the form/serializer. Keep it.                                                               |
-| `django.contrib.gis` removed from `INSTALLED_APPS` in `test.py`                      | Avoids GDAL system-lib requirement. The geo shim handles field types.                                                                              |
-| `apps/api/.husky/pre-commit` has no shebang or `husky.sh` source line                | Husky v9 deprecated the old format; new format is just the command.                                                                                |
-| `pnpm/action-setup@v4` has no `version:` input in CI                                 | It reads `packageManager` from `package.json` to avoid drift.                                                                                      |
-| `pnpm-lock.yaml` is 14k lines and committed                                          | Required by `pnpm install --frozen-lockfile` and `setup-node` cache.                                                                               |
+| Pattern                                                                              | Why                                                                                                                                                                                                                                                                                           |
+| ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/mobile/metro.config.js` uses CommonJS (`require`, `__dirname`)                 | Metro requires CJS for the resolver config. ESLint override handles it.                                                                                                                                                                                                                       |
+| `apps/api/apps/users/models.py` has `REQUIRED_FIELDS = ["username"]` as a plain list | Django framework attribute, not a typo. Ruff's `RUF012` is globally suppressed in `pyproject.toml`.                                                                                                                                                                                           |
+| `# noqa: BLE001` on `except Exception:` in `core/views.py` health check              | Health checks must always return — broad except is intentional.                                                                                                                                                                                                                               |
+| `apps/admin/tailwind.config.ts` uses `var(--color-…)` not channel triplets           | Single-source tokens, no preprocessing. Opacity utilities (`bg-primary/50`) won't work — that's a documented trade-off in `packages/ui/README.md`.                                                                                                                                            |
+| Bag `save()` calls `self.full_clean()`                                               | Enforces price validation at the model layer, not just the form/serializer. Keep it.                                                                                                                                                                                                          |
+| `django.contrib.gis` removed from `INSTALLED_APPS` in `test.py`                      | Avoids GDAL system-lib requirement. The geo shim handles field types.                                                                                                                                                                                                                         |
+| `apps/api/.husky/pre-commit` has no shebang or `husky.sh` source line                | Husky v9 deprecated the old format; new format is just the command.                                                                                                                                                                                                                           |
+| `pnpm/action-setup@v4` has no `version:` input in CI                                 | It reads `packageManager` from `package.json` to avoid drift.                                                                                                                                                                                                                                 |
+| `pnpm-lock.yaml` is 14k lines and committed                                          | Required by `pnpm install --frozen-lockfile` and `setup-node` cache.                                                                                                                                                                                                                          |
+| `apps/mobile/metro.config.js` redirects `react` / `react-dom` to the workspace root  | pnpm hoists `react@19` (mobile/RN 0.81) at the root but nests `react@18` under deps with `^18 \|\| ^19` peer ranges (e.g. `@tanstack/react-query`). Without the redirect, Metro bundles two React copies → "Invalid hook call". Mobile-only; admin (Next 14) still uses `react@18` correctly. |
 
 ---
 
@@ -247,6 +253,8 @@ Live TODO list — feel free to grab any of these:
    triad — they document each other.
 4. **For design questions**, `packages/ui/src/tokens.ts` is the source of
    truth; nothing else gets to define a color or spacing value.
+5. **For QA / release verification**, `checklist.md` is the manual-testing
+   runbook — session-by-session, with `🔒` markers for features not yet built.
 
 ---
 
