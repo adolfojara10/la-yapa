@@ -171,6 +171,8 @@ la-yapa/
 │   │   │   ├── theme/           # Design tokens, colors
 │   │   │   ├── locales/         # i18n (es, en)
 │   │   │   └── assets/          # Images, mascot illustrations, fonts
+│   │   ├── android/             # Expo prebuild native scaffolding (committed — see posture below)
+│   │   ├── ios/                 # Expo prebuild native scaffolding (committed once iOS comes online)
 │   │   ├── app.json
 │   │   └── package.json
 │   │
@@ -223,6 +225,49 @@ la-yapa/
 ├── pnpm-workspace.yaml
 └── README.md
 ```
+
+---
+
+### 🤖 Native scaffolding posture
+
+`apps/mobile/android/` (and `apps/mobile/ios/` once iOS comes online) is
+**committed to git**, not regenerated per-checkout. Rationale:
+
+- **Reproducibility.** A fresh `git clone && pnpm install && expo run:android`
+  builds an identical APK across machines and CI without depending on
+  `expo prebuild`'s SDK-version-dependent output.
+- **Pinning.** The Gradle wrapper version, AGP version, Kotlin version, NDK
+  version, package id (`ec.layapa.app`), debug keystore, splash assets, and
+  app icon resources are all canonical — they should not silently change
+  when a contributor upgrades Expo CLI locally.
+- **Native edit headroom.** When we eventually add custom Kotlin/Swift
+  modules (payment SDKs, deep-link handlers, push channels), those edits
+  live in `android/`/`ios/` and must be tracked.
+- **CI parity.** GitHub Actions builds the same native tree the dev built
+  locally; no "works on my machine" gaps.
+
+What's **not** committed (per repo `.gitignore`):
+
+- `apps/mobile/android/.gradle/`, `.kotlin/`, `build/`, `app/build/`,
+  `app/.cxx/` — per-build output, regenerated every run.
+- `apps/mobile/android/local.properties` — machine-specific SDK paths.
+- `apps/mobile/ios/Pods/`, `ios/build/`, `ios/.xcode.env.local` — same
+  rationale (CocoaPods install output + per-machine Xcode env).
+
+The `apps/mobile/android/app/debug.keystore` file **is** committed — it's
+the canonical Android-wide debug keystore (public key, well-known across
+every Android dev environment). It is **not** a production signing key;
+release signing keys must never be committed and will live in Expo EAS
+secrets when release builds come online.
+
+Regenerating the tree from scratch (e.g. after an Expo SDK upgrade):
+
+```bash
+pnpm --filter @layapa/mobile exec expo prebuild --clean --platform android
+```
+
+Then review the diff carefully — `--clean` overwrites every file, including
+intentional edits.
 
 ---
 
