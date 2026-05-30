@@ -31,7 +31,7 @@ la-yapa/
 | Layer         | Choice                                               |
 | ------------- | ---------------------------------------------------- |
 | Monorepo      | pnpm 9 workspaces + Turborepo 2                      |
-| Mobile        | React Native 0.74 + Expo SDK 51 + Expo Router        |
+| Mobile        | React Native 0.81 + Expo SDK 54 + Expo Router 6      |
 | Web admin     | Next.js 14 (App Router) + Tailwind CSS               |
 | State         | Zustand + TanStack Query                             |
 | Backend       | Django 5.1 + DRF + Simple JWT                        |
@@ -59,10 +59,15 @@ You need the following versions installed before running `pnpm install`:
 | Docker   | latest  | Engine + Compose v2 plugin                             |
 | Watchman | latest  | Optional on Linux, recommended on macOS                |
 
-Optional (only if you want native iOS/Android builds):
+For running the mobile app on a phone or emulator (see
+[Mobile dev workflow](#-mobile-dev-workflow-android) below):
 
-- Xcode 15+ (iOS, macOS only)
-- Android Studio + JDK 17 (Android)
+- **Android Studio + JDK 17** — required on Linux & Windows; recommended on
+  macOS. The project does **not** run in App Store Expo Go (see warning
+  below), so a dev client is the only path.
+- **Xcode 15+** — required for iOS local builds; macOS only. iOS device
+  testing without a Mac requires an Apple Developer account ($99/yr) +
+  EAS Build and is currently **deferred**.
 
 ---
 
@@ -187,7 +192,10 @@ pnpm dev
 
 - API: http://localhost:8000 (admin at `/admin`, docs at `/api/docs/`)
 - Admin: http://localhost:3000
-- Mobile: Expo Dev Server (scan QR with Expo Go or press `i`/`a`)
+- Mobile: Expo Dev Server — **see [Mobile dev workflow](#-mobile-dev-workflow-android) below.**
+  The App Store **Expo Go app does not work** with this project (SDK 54 +
+  Reanimated 4 + New Architecture are newer than Go's bundled native modules).
+  You need a one-time Android dev build; after that JS reloads are instant.
 - MailHog: http://localhost:8025
 
 > ⚠️ `pnpm dev` will only start the API correctly if `apps/api/.venv` is activated
@@ -200,6 +208,195 @@ pnpm dev
 > # Terminal 2
 > source apps/api/.venv/bin/activate && pnpm dev
 > ```
+
+---
+
+## 📱 Mobile dev workflow (Android)
+
+> **Why no Expo Go?** This project is on Expo SDK 54 + RN 0.81 + Reanimated 4
+>
+> - the New Architecture. The Expo Go app on the App Store / Play Store
+>   bundles a fixed set of native modules at older versions, so the first
+>   `import` of `react-native-gesture-handler` (or anything else that touches
+>   Reanimated worklets) crashes with `Exception in HostFunction: <unknown>`.
+>   The fix is a **development build** — your own debug APK / IPA with the
+>   exact native versions this project pins. Same hot-reload UX as Expo Go;
+>   you just build it once.
+>
+> **iOS device testing is currently deferred.** It requires either a Mac
+> (`expo run:ios`) or an Apple Developer account ($99/yr) + EAS Build.
+> Android is the inner-loop platform for now; iOS QA will happen via EAS
+> once the Apple account is provisioned.
+
+### 1. Install Android Studio + SDK + JDK
+
+#### macOS
+
+```bash
+brew install --cask android-studio
+brew install --cask temurin@17        # JDK 17
+```
+
+Open Android Studio once → **More Actions → SDK Manager** → install:
+
+- **Android SDK Platform 34** (or latest stable)
+- **Android SDK Build-Tools 34.x**
+- **Android SDK Platform-Tools** (gives you `adb`)
+- **Android Emulator** (only if you want an emulator)
+
+#### Ubuntu 22.04 / 24.04 LTS
+
+```bash
+sudo apt install -y openjdk-17-jdk           # JDK 17
+sudo snap install android-studio --classic   # easiest install path
+```
+
+If you don't want snap, download the tarball from
+<https://developer.android.com/studio> and extract into `~/android-studio`,
+then run `~/android-studio/bin/studio.sh` once to complete setup.
+
+In Android Studio, same as macOS: **More Actions → SDK Manager** → install
+Platform 34 + Build-Tools 34.x + Platform-Tools + (optionally) Emulator.
+
+#### Environment variables (both OSes)
+
+Add to `~/.zshrc` / `~/.bashrc`:
+
+```bash
+# macOS
+export ANDROID_HOME="$HOME/Library/Android/sdk"
+# Linux
+export ANDROID_HOME="$HOME/Android/Sdk"
+
+export PATH="$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$ANDROID_HOME/cmdline-tools/latest/bin"
+```
+
+Reload the shell, then verify:
+
+```bash
+adb version          # Android Debug Bridge version 1.0.41+
+emulator -list-avds  # empty until you create one
+```
+
+---
+
+### 2. Pick one: emulator OR physical device
+
+#### Option A — Emulator (fastest to set up, no hardware needed)
+
+Create an AVD (Android Virtual Device) once:
+
+1. Android Studio → **More Actions → Virtual Device Manager → Create device**.
+2. Pick **Pixel 7** (or any phone profile).
+3. System image: **API 34** (Android 14), `x86_64` on Intel/AMD, `arm64` on
+   Apple Silicon — **`Google Play` variant** so push notifications work.
+4. Finish → click ▶ to boot it. Leave it running.
+
+CLI alternative (after the SDK is installed):
+
+```bash
+sdkmanager "system-images;android-34;google_apis_playstore;x86_64"
+avdmanager create avd -n layapa -k "system-images;android-34;google_apis_playstore;x86_64" -d pixel_7
+emulator -avd layapa &
+```
+
+Verify `adb` sees the emulator:
+
+```bash
+adb devices
+# emulator-5554   device
+```
+
+#### Option B — Physical Android device
+
+On the phone:
+
+1. **Settings → About phone** → tap **Build number** 7 times to unlock
+   Developer Options.
+2. **Settings → System → Developer options** → enable **USB debugging**.
+3. Plug into the dev machine with a data-capable USB cable (some "charge
+   only" cables won't work).
+4. The phone will prompt **"Allow USB debugging from this computer?"** →
+   tap **Allow** (check the "always" box).
+
+Verify:
+
+```bash
+adb devices
+# R52NA0XXXX   device     ← physical device
+```
+
+If it shows `unauthorized`, you missed the on-phone prompt — unplug, replug,
+and watch the phone screen.
+
+Linux only: if `adb devices` shows nothing, you likely need a udev rule.
+The easiest fix is `sudo apt install -y android-sdk-platform-tools-common`
+(installs `/lib/udev/rules.d/51-android.rules`); then `sudo udevadm control
+--reload-rules && sudo udevadm trigger`, and replug the phone.
+
+---
+
+### 3. First build (creates the dev client)
+
+```bash
+# from the repo root, with Metro NOT running
+pnpm --filter @layapa/mobile exec expo run:android --device
+```
+
+What this does:
+
+- Generates the native `android/` project (gitignored — regenerated on demand).
+- Compiles a debug APK with this project's exact native deps (Reanimated 4,
+  gesture-handler 2.28, etc.).
+- Installs the APK on the connected emulator/device.
+- Starts Metro and connects the dev client to it.
+
+**First build takes 5–15 minutes** (Gradle downloads, NDK compiles). Subsequent
+builds are incremental and ~30 s.
+
+Re-run `expo run:android` **only** after changing native config:
+
+- `app.json` `plugins` block
+- adding a native dependency (anything with `ios/` or `android/` folders)
+- bumping Expo SDK / RN / Reanimated versions
+
+For 99% of work (JS, React components, screens, styles, business logic) you
+**do not** rebuild — just reload the JS bundle.
+
+---
+
+### 4. Daily inner loop
+
+Once the dev client is installed:
+
+```bash
+pnpm --filter @layapa/mobile dev     # starts Metro; press `a` to launch the dev client
+# or just: pnpm dev (runs api + admin + mobile in parallel)
+```
+
+- **JS edit → save** → bundle reloads in ~1 s on the device.
+- **Shake the device** (or `adb shell input keyevent 82` for emulator) →
+  opens the dev menu (Reload, Toggle Inspector, Performance Monitor, etc.).
+- **R + R** on the emulator keyboard → manual reload.
+- If Metro and the device get out of sync, kill Metro and restart with
+  `pnpm --filter @layapa/mobile exec expo start -c` (the `-c` clears the
+  Metro cache — needed after editing `babel.config.js`, `metro.config.js`,
+  or `app.json`).
+
+---
+
+### 5. Troubleshooting
+
+| Symptom                                                        | Likely cause / fix                                                                                                             |
+| -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `Exception in HostFunction: <unknown>` on first import         | Running in App Store Expo Go (not supported) — build a dev client. Or stale Babel cache after a config edit — `expo start -c`. |
+| `adb: command not found`                                       | `ANDROID_HOME` / `PATH` not exported — see §1.                                                                                 |
+| `adb devices` shows `unauthorized`                             | Tap **Allow** on the phone's "USB debugging" prompt; replug if missed.                                                         |
+| `adb devices` shows nothing on Linux                           | Missing udev rules — `sudo apt install android-sdk-platform-tools-common`, then replug.                                        |
+| Gradle build fails with `SDK location not found`               | Re-export `ANDROID_HOME` and restart the shell.                                                                                |
+| Emulator boots but `pnpm dev` says "no devices"                | `adb kill-server && adb start-server`, then `adb devices`.                                                                     |
+| "Unable to load script" red screen                             | Metro isn't running, or the phone can't reach it. Shake → **Settings → Debug server host** → set to `<your-machine-ip>:8081`.  |
+| Build is fine but app crashes on launch with no useful message | `adb logcat ReactNativeJS:V ReactNative:V *:S` to stream JS-side errors.                                                       |
 
 ---
 
@@ -223,8 +420,9 @@ Per-app:
 pnpm --filter @layapa/api  migrate
 pnpm --filter @layapa/api  makemigrations
 pnpm --filter @layapa/api  createsuperuser
-pnpm --filter @layapa/mobile ios
-pnpm --filter @layapa/mobile android
+pnpm --filter @layapa/mobile dev                       # Metro server (connects to your dev client)
+pnpm --filter @layapa/mobile exec expo run:android     # rebuild & install Android dev client
+# pnpm --filter @layapa/mobile exec expo run:ios       # macOS only; iOS deferred (see Mobile dev workflow)
 pnpm --filter @layapa/admin dev
 ```
 
@@ -275,7 +473,7 @@ Each app reads its own `.env` file (gitignored). Templates live next to them
 
 | Var                         | Used by | Default (dev)                                    |
 | --------------------------- | ------- | ------------------------------------------------ |
-| `DATABASE_URL`              | api     | `postgres://layapa:layapa@localhost:5432/layapa` |
+| `DATABASE_URL`              | api     | `postgres://layapa:layapa@localhost:5433/layapa` |
 | `REDIS_URL`                 | api     | `redis://localhost:6379/0`                       |
 | `EMAIL_HOST` / `EMAIL_PORT` | api     | `localhost` / `1025` (MailHog)                   |
 | `EXPO_PUBLIC_API_BASE_URL`  | mobile  | `http://localhost:8000/api/v1`                   |

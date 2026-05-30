@@ -43,27 +43,34 @@ Per-app filters: `pnpm --filter @layapa/mobile <script>` /
 
 ## 2. Tech stack (locked in — do not propose alternatives)
 
-| Layer         | Choice                                           |
-| ------------- | ------------------------------------------------ |
-| Monorepo      | pnpm 9 workspaces + Turborepo 2                  |
-| Mobile        | RN 0.74 + Expo SDK 51 + Expo Router (file-based) |
-| Mobile state  | Zustand + TanStack Query                         |
-| Web admin     | Next.js 14 (App Router) + Tailwind               |
-| Backend       | Django 5.1 + DRF + Simple JWT                    |
-| Database      | PostgreSQL 16 + PostGIS 3.4                      |
-| Cache / queue | Redis 7 + Celery                                 |
-| File storage  | Cloudflare R2 (S3 API)                           |
-| Maps          | Mapbox                                           |
-| Payments      | PayPhone + DeUna (MVP); Kushki (Phase 2)         |
-| Push          | Expo Push Notifications                          |
-| Email         | Resend (prod); MailHog (dev)                     |
-| Auth (social) | django-allauth (Google, Apple)                   |
-| Hosting       | Railway (MVP), portable via Docker               |
-| Errors        | Sentry                                           |
-| Analytics     | PostHog                                          |
-| i18n          | i18next (mobile), django-modeltranslation (API)  |
+| Layer            | Choice                                                        |
+| ---------------- | ------------------------------------------------------------- |
+| Monorepo         | pnpm 9 workspaces + Turborepo 2                               |
+| Mobile           | RN 0.81 + React 19 + Expo SDK 54 + Expo Router 6 (file-based) |
+| Mobile animation | Reanimated 4 + `react-native-worklets` 0.8 (New Architecture) |
+| Mobile state     | Zustand + TanStack Query                                      |
+| Web admin        | Next.js 14 (App Router) + React 18 + Tailwind                 |
+| Backend          | Django 5.1 + DRF 3.15 + Simple JWT (Python 3.12)              |
+| Database         | PostgreSQL 16 + PostGIS 3.4                                   |
+| Cache / queue    | Redis 7 + Celery 5                                            |
+| File storage     | Cloudflare R2 (S3 API)                                        |
+| Maps             | Mapbox                                                        |
+| Payments         | PayPhone + DeUna (MVP); Kushki (Phase 2)                      |
+| Push             | Expo Push Notifications                                       |
+| Email            | Resend (prod); MailHog (dev)                                  |
+| Auth (social)    | django-allauth (Google, Apple)                                |
+| Hosting          | Railway (MVP), portable via Docker                            |
+| Errors           | Sentry                                                        |
+| Analytics        | PostHog                                                       |
+| i18n             | i18next (mobile), django-modeltranslation (API)               |
 
 If a task requires deviating from this stack, **ask first**.
+
+> ⚠️ **Mobile cannot run in App Store Expo Go.** Reanimated 4 + RN 0.81 + New
+> Architecture are newer than the native modules baked into the public Expo
+> Go binary, so any worklet-touching import (gesture-handler, reanimated,
+> bottom-sheet) crashes with `Exception in HostFunction: <unknown>`. See
+> §4 "Mobile dev workflow" for the dev-client setup.
 
 ---
 
@@ -135,6 +142,47 @@ If a task requires deviating from this stack, **ask first**.
    `api/v1/`.
 4. Test in `apps/<domain>/tests/test_<endpoint>.py` using `APIClient`.
 5. Mirror the response shape in `packages/shared-types/src/<domain>.ts`.
+
+### Mobile dev workflow (running the app)
+
+**Do not use App Store Expo Go** — see warning in §2. The project's RN/Expo/Reanimated
+versions are newer than the public Expo Go binary supports.
+
+**Inner loop (recommended): Android dev client on Linux**
+
+```bash
+# One-time prerequisites:
+#   - Android Studio + Platform Tools (sdkmanager, adb)
+#   - ANDROID_HOME exported, ~/Android/Sdk/platform-tools in PATH
+#   - Either an emulator (AVD) booted OR a USB device with USB-debugging on
+pnpm --filter @layapa/mobile exec expo run:android --device   # first build (~5–15 min)
+pnpm --filter @layapa/mobile dev                              # subsequent runs
+```
+
+`expo run:android` produces a debug APK installed on the device. From then on,
+JS reloads are instant — the dev client connects to Metro identically to Expo Go.
+Re-run `expo run:android` only after editing native config (`app.json` plugins,
+new native deps, version bumps).
+
+**iOS testing (deferred):** requires a Mac for local builds OR a paid Apple
+Developer account ($99/yr) + EAS Build for cloud builds. No Linux-native path
+for iOS device testing exists. Plan: ship Android-first for the dev inner loop,
+do iOS QA via EAS once Apple account is provisioned.
+
+**Web preview (`expo start` then press `w`):** works for layout sanity-checking
+only — native modules (gesture-handler, reanimated worklets, push, geolocation,
+payments) either stub out or render incorrectly.
+
+**Babel/Metro caveats:**
+
+- `babel.config.js` declares **only `babel-preset-expo`** — the preset
+  auto-injects `react-native-worklets/plugin` when Reanimated 4 is installed.
+  Do **not** add `react-native-reanimated/plugin` (the legacy v3 plugin); it
+  conflicts with the v4 worklets transform and produces
+  `Exception in HostFunction: <unknown>` at first import.
+- After editing `babel.config.js`, `metro.config.js`, or `app.json`, clear
+  caches: `rm -rf apps/mobile/.expo apps/mobile/node_modules/.cache` and
+  restart with `expo start -c`.
 
 ### Adding a mobile screen
 

@@ -132,7 +132,7 @@ Perfect! Generating the **master prompt now**. Buckle up — this is comprehensi
 
 | Layer                | Choice                                                                                  |
 | -------------------- | --------------------------------------------------------------------------------------- |
-| Mobile               | React Native + Expo (SDK 50+)                                                           |
+| Mobile               | React Native 0.81 + Expo SDK 54 + React 19 (New Architecture, Reanimated 4)             |
 | State Management     | Zustand + React Query (TanStack Query)                                                  |
 | Navigation           | Expo Router (file-based)                                                                |
 | Backend              | Django 5.x + Django REST Framework                                                      |

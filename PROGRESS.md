@@ -10,20 +10,20 @@ future work. Update at the end of every session.
 
 ## 🔭 Current state (at a glance)
 
-| Layer                                 | Status               | Notes                                                              |
-| ------------------------------------- | -------------------- | ------------------------------------------------------------------ |
-| Monorepo (pnpm + Turborepo)           | ✅ Working           | `pnpm install` clean, lockfile committed                           |
-| CI (GitHub Actions)                   | ✅ Green             | JS job + Django job (PostGIS + Redis service containers)           |
-| Pre-commit hooks                      | ✅ Working           | Husky → Prettier on JS/MD; Python via separate `pre-commit`        |
-| Design system (`@layapa/ui`)          | ✅ v1                | Tokens single-source, light/dark, type scale, motion               |
-| Mobile (Expo SDK 51)                  | ✅ Scaffold          | Theme + 11 components + `/design-system` showcase + Yapi/Logo SVGs |
-| Admin (Next.js 14)                    | ✅ Scaffold          | Tailwind + next-themes + 8 shadcn-style primitives + showcase page |
-| Django API (`apps/api`)               | ✅ Data layer        | 28 models · 23 migrations · 17 tests · 92% coverage · seed command |
-| DRF endpoints                         | ⏳ Health-check only | Domain endpoints next                                              |
-| Auth (JWT + social)                   | ⏳ Scaffolded        | `simplejwt` wired; allauth installed, not configured               |
-| Mobile features (auth, browse, order) | ⏳ Not started       |                                                                    |
-| Admin features (approvals, payouts)   | ⏳ Not started       |                                                                    |
-| Real Yapi artwork                     | ⏳ Placeholder SVGs  | Awaiting illustrator commission                                    |
+| Layer                                 | Status               | Notes                                                                                            |
+| ------------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------ |
+| Monorepo (pnpm + Turborepo)           | ✅ Working           | `pnpm install` clean, lockfile committed                                                         |
+| CI (GitHub Actions)                   | ✅ Green             | JS job + Django job (PostGIS + Redis service containers)                                         |
+| Pre-commit hooks                      | ✅ Working           | Husky → Prettier on JS/MD; Python via separate `pre-commit`                                      |
+| Design system (`@layapa/ui`)          | ✅ v1                | Tokens single-source, light/dark, type scale, motion                                             |
+| Mobile (Expo SDK 54)                  | ✅ Scaffold          | Theme + 11 components + `/design-system` + Yapi/Logo SVGs · **dev build required (not Expo Go)** |
+| Admin (Next.js 14)                    | ✅ Scaffold          | Tailwind + next-themes + 8 shadcn-style primitives + showcase page                               |
+| Django API (`apps/api`)               | ✅ Data layer        | 28 models · 23 migrations · 17 tests · 92% coverage · seed command                               |
+| DRF endpoints                         | ⏳ Health-check only | Domain endpoints next                                                                            |
+| Auth (JWT + social)                   | ⏳ Scaffolded        | `simplejwt` wired; allauth installed, not configured                                             |
+| Mobile features (auth, browse, order) | ⏳ Not started       |                                                                                                  |
+| Admin features (approvals, payouts)   | ⏳ Not started       |                                                                                                  |
+| Real Yapi artwork                     | ⏳ Placeholder SVGs  | Awaiting illustrator commission                                                                  |
 
 ---
 
@@ -39,6 +39,7 @@ future work. Update at the end of every session.
   custom `User` model, JWT auth scaffolding, `drf-spectacular` OpenAPI docs,
   health-check endpoint.
 - `apps/mobile`: Expo SDK 51 + Expo Router + TanStack Query + Zustand.
+  (Later upgraded to SDK 54 — see Session 4.)
 - `apps/admin`: Next.js 14 (App Router) + Tailwind.
 - `docker-compose.yml` with Postgres 16, Redis 7, MailHog.
 - `.github/workflows/ci.yml` — two parallel jobs (JS + Django).
@@ -148,6 +149,48 @@ gamification · suspended_meals · impact · sales · ads · geo · core`.
 
 ---
 
+### Session 4 — Mobile SDK 54 upgrade (Expo Go incompatibility)
+
+**Built / changed**
+
+- **Bumped mobile to Expo SDK 54** to test on a physical iPhone:
+  - `expo` `~54.0.35` (was `~51.x`)
+  - `react-native` `0.81.5` (was `0.74.x`)
+  - `react` / `react-dom` `19.1.0` (was `18.x`)
+  - `react-native-reanimated` `~4.1.7` (was `~3.x`) + new peer
+    `react-native-worklets` `0.8.3`
+  - `expo-router` `~6.0.24` (was `~3.x`)
+  - All `expo-*`, `@react-navigation/*`, `react-native-screens`,
+    `react-native-safe-area-context`, `react-native-gesture-handler`,
+    `react-native-svg` aligned to SDK 54-compatible versions.
+- **`apps/mobile/babel.config.js`**: removed manual `react-native-reanimated/plugin`.
+  `babel-preset-expo` (54.0.11) auto-injects `react-native-worklets/plugin`
+  when Reanimated 4 is detected; the legacy plugin conflicts with it and
+  produces `Exception in HostFunction: <unknown>` at first import of any
+  reanimated/gesture-handler module.
+
+**Decisions**
+
+- **Inner-loop platform = Android dev client on Linux.** The App Store
+  Expo Go binary does not match this project's native module versions
+  (Reanimated 4 / RN 0.81 / New Arch), so any worklet-touching import
+  crashes immediately. iOS device testing is **deferred** until an
+  Apple Developer account ($99/yr) + EAS Build are in place; no Linux-
+  native path exists for iOS local builds.
+- **Web preview** (`expo start` → `w`) kept available for pure layout
+  sanity-checks only; native modules degrade or stub out there.
+
+**Caveats**
+
+- Need to install/configure **Android Studio + platform-tools + an AVD
+  or USB-debug device** before the dev loop is usable. Not yet done.
+- `app.json` does not explicitly set `newArchEnabled` — relying on SDK
+  54's default (on). If we ever need to disable it, add it explicitly.
+- First Android build via `expo run:android` will be slow (~5–15 min);
+  subsequent JS reloads are instant.
+
+---
+
 ## 🎯 Next-up priorities
 
 ### Phase 1 — Consumer Core MVP (Weeks 3-6 of the master roadmap)
@@ -186,6 +229,11 @@ gamification · suspended_meals · impact · sales · ads · geo · core`.
 
 ### Cross-cutting / infra debt
 
+- [ ] **Install Android Studio + SDK + AVD on dev machine** so
+      `expo run:android` works; that's the inner loop for mobile until iOS
+      is unblocked.
+- [ ] **Provision Apple Developer account ($99/yr) + EAS Build profile**
+      for iOS device testing once mobile features stabilize.
 - [ ] Add `python manage.py makemigrations --check --dry-run` to CI.
 - [ ] Remove `mypy || true` once `django-stubs` patterns are established.
 - [ ] Dockerize the API service so `pnpm dev` doesn't need a venv shell.
