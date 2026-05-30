@@ -103,7 +103,7 @@ TEMPLATES = [
 DATABASES = {
     "default": env.db(
         "DATABASE_URL",
-        default="postgis://layapa:layapa@localhost:5432/layapa",
+        default="postgis://layapa:layapa@localhost:5433/layapa",
     ),
 }
 DATABASES["default"]["ATOMIC_REQUESTS"] = True
