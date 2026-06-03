@@ -4,6 +4,7 @@ Base Django settings for La Yapa API.
 Environment-specific settings (dev, test, prod) inherit from this file.
 """
 
+from datetime import timedelta
 from pathlib import Path
 
 import environ
@@ -31,17 +32,25 @@ DJANGO_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sites",
     "django.contrib.gis",
 ]
 
 THIRD_PARTY_APPS = [
     "rest_framework",
     "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
     "django_filters",
     "django_extensions",
     "drf_spectacular",
     "encrypted_model_fields",
+    "anymail",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
+    "allauth.socialaccount.providers.apple",
 ]
 
 LOCAL_APPS = [
@@ -75,7 +84,10 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
 ]
+
+SITE_ID = 1
 
 ROOT_URLCONF = "config.urls"
 WSGI_APPLICATION = "config.wsgi.application"
@@ -128,12 +140,56 @@ CELERY_TASK_TRACK_STARTED = True
 # ---------- Auth ----------
 AUTH_USER_MODEL = "users.User"
 
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
+]
+
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {"min_length": 8},
+    },
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
+
+# Simple JWT
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "user_id",
+}
+
+# Allauth — we don't use the HTML pages; allauth provides the SocialAccount
+# model + email-uniqueness machinery. JWTs are issued by simplejwt, not allauth.
+ACCOUNT_EMAIL_VERIFICATION = "none"  # we handle verification with our own OTP flow
+ACCOUNT_LOGIN_METHODS = {"email"}
+ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
+ACCOUNT_USER_MODEL_USERNAME_FIELD = "username"
+ACCOUNT_UNIQUE_EMAIL = True
+SOCIALACCOUNT_EMAIL_VERIFICATION = "none"
+SOCIALACCOUNT_QUERY_EMAIL = True
+
+# Social provider credentials (server-side id_token verification, not OAuth web flow)
+# CSV of all client IDs (iOS + Android + Web) that are valid `aud` values for Google id_tokens.
+GOOGLE_OAUTH_CLIENT_IDS = env.list("GOOGLE_OAUTH_CLIENT_IDS", default=[])
+APPLE_BUNDLE_ID = env("APPLE_BUNDLE_ID", default="ec.layapa.app")
+APPLE_TEAM_ID = env("APPLE_TEAM_ID", default="")
+
+# Auth flow timing
+EMAIL_VERIFICATION_OTP_TTL_MINUTES = env.int("EMAIL_VERIFICATION_OTP_TTL_MINUTES", default=15)
+PASSWORD_RESET_TOKEN_TTL_MINUTES = env.int("PASSWORD_RESET_TOKEN_TTL_MINUTES", default=30)
+EMAIL_VERIFICATION_MAX_ATTEMPTS = 5
+
+# Frontend URL used to build password-reset links (web + mobile deep-link).
+FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:3000")
+MOBILE_DEEP_LINK_SCHEME = env("MOBILE_DEEP_LINK_SCHEME", default="layapa")
 
 # ---------- DRF ----------
 REST_FRAMEWORK = {

@@ -1,0 +1,9 @@
+Hi!
+
+Your La Yapa verification code is:
+
+    {{ code }}
+
+It expires in a few minutes. If this wasn't you, ignore this email.
+
+— The La Yapa team

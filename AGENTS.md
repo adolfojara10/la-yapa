@@ -204,24 +204,74 @@ payments) either stub out or render incorrectly.
 2. Server components for data fetching; `'use client'` only when needed.
 3. Use components from `@/components/ui`.
 
+### Provisioning social auth credentials
+
+The auth system verifies Google / Apple identity tokens server-side; the
+client only ever sees an opaque token from the provider. To enable the flow
+end-to-end you need credentials from each provider's console.
+
+**Google** (one-time, free):
+
+1. Google Cloud Console → create a project → **OAuth consent screen** →
+   External → fill app name + support email. No verification needed for
+   testing.
+2. **Credentials** → Create credentials → OAuth client ID. Create **three**
+   clients (Google requires one per platform):
+   - **iOS** — bundle ID: `ec.layapa.app`
+   - **Android** — package: `ec.layapa.app`, SHA-1 from
+     `cd apps/mobile/android && ./gradlew signingReport` (debug keystore for
+     local; release keystore for production)
+   - **Web** — used by Expo's auth-session proxy when running in Expo Go /
+     web preview
+3. Drop the three client IDs into env:
+   - Mobile (`apps/mobile/.env`):
+     `EXPO_PUBLIC_GOOGLE_{IOS,ANDROID,WEB}_CLIENT_ID=…`
+   - API (`apps/api/.env`): `GOOGLE_OAUTH_CLIENT_IDS=ios-id,android-id,web-id`
+     (CSV — all three are valid `aud` values for tokens issued by this
+     Google project, so the server must accept any of them).
+
+**Apple** (blocked on $99/yr Apple Developer account — see
+`PROGRESS.md` cross-cutting debt):
+
+1. developer.apple.com → Identifiers → register App ID `ec.layapa.app`
+   with **Sign In with Apple** capability enabled.
+2. (Optional, only if web admin needs Sign In with Apple) Create a
+   **Services ID** + a private key for "Sign in with Apple" and store the
+   resulting team ID + key ID + .p8 file.
+3. Env: `APPLE_BUNDLE_ID=ec.layapa.app`, `APPLE_TEAM_ID=…` in
+   `apps/api/.env`. The API verifies Apple identity tokens against Apple's
+   public JWKS (`https://appleid.apple.com/auth/keys`), with the bundle ID
+   as the required `aud`.
+
+**Resend** (production email):
+
+1. resend.com → Sign up → API Keys → create a key.
+2. Add and verify your sending domain (DNS records: SPF, DKIM, DMARC).
+3. Env (prod only): `RESEND_API_KEY=…` in `apps/api/.env`. Dev keeps the
+   default MailHog SMTP backend; swapping to Resend in prod is a one-env-var
+   change (the `prod.py` settings already select
+   `anymail.backends.resend.EmailBackend`).
+
 ---
 
 ## 5. Things that look wrong but are correct
 
 These trip up agents repeatedly. **Don't "fix" them.**
 
-| Pattern                                                                              | Why                                                                                                                                                                                                                                                                                           |
-| ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `apps/mobile/metro.config.js` uses CommonJS (`require`, `__dirname`)                 | Metro requires CJS for the resolver config. ESLint override handles it.                                                                                                                                                                                                                       |
-| `apps/api/apps/users/models.py` has `REQUIRED_FIELDS = ["username"]` as a plain list | Django framework attribute, not a typo. Ruff's `RUF012` is globally suppressed in `pyproject.toml`.                                                                                                                                                                                           |
-| `# noqa: BLE001` on `except Exception:` in `core/views.py` health check              | Health checks must always return — broad except is intentional.                                                                                                                                                                                                                               |
-| `apps/admin/tailwind.config.ts` uses `var(--color-…)` not channel triplets           | Single-source tokens, no preprocessing. Opacity utilities (`bg-primary/50`) won't work — that's a documented trade-off in `packages/ui/README.md`.                                                                                                                                            |
-| Bag `save()` calls `self.full_clean()`                                               | Enforces price validation at the model layer, not just the form/serializer. Keep it.                                                                                                                                                                                                          |
-| `django.contrib.gis` removed from `INSTALLED_APPS` in `test.py`                      | Avoids GDAL system-lib requirement. The geo shim handles field types.                                                                                                                                                                                                                         |
-| `apps/api/.husky/pre-commit` has no shebang or `husky.sh` source line                | Husky v9 deprecated the old format; new format is just the command.                                                                                                                                                                                                                           |
-| `pnpm/action-setup@v4` has no `version:` input in CI                                 | It reads `packageManager` from `package.json` to avoid drift.                                                                                                                                                                                                                                 |
-| `pnpm-lock.yaml` is 14k lines and committed                                          | Required by `pnpm install --frozen-lockfile` and `setup-node` cache.                                                                                                                                                                                                                          |
-| `apps/mobile/metro.config.js` redirects `react` / `react-dom` to the workspace root  | pnpm hoists `react@19` (mobile/RN 0.81) at the root but nests `react@18` under deps with `^18 \|\| ^19` peer ranges (e.g. `@tanstack/react-query`). Without the redirect, Metro bundles two React copies → "Invalid hook call". Mobile-only; admin (Next 14) still uses `react@18` correctly. |
+| Pattern                                                                              | Why                                                                                                                                                                                                                                                                                                                                                            |
+| ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/mobile/metro.config.js` uses CommonJS (`require`, `__dirname`)                 | Metro requires CJS for the resolver config. ESLint override handles it.                                                                                                                                                                                                                                                                                        |
+| `apps/api/apps/users/models.py` has `REQUIRED_FIELDS = ["username"]` as a plain list | Django framework attribute, not a typo. Ruff's `RUF012` is globally suppressed in `pyproject.toml`.                                                                                                                                                                                                                                                            |
+| `# noqa: BLE001` on `except Exception:` in `core/views.py` health check              | Health checks must always return — broad except is intentional.                                                                                                                                                                                                                                                                                                |
+| `apps/admin/tailwind.config.ts` uses `var(--color-…)` not channel triplets           | Single-source tokens, no preprocessing. Opacity utilities (`bg-primary/50`) won't work — that's a documented trade-off in `packages/ui/README.md`.                                                                                                                                                                                                             |
+| Bag `save()` calls `self.full_clean()`                                               | Enforces price validation at the model layer, not just the form/serializer. Keep it.                                                                                                                                                                                                                                                                           |
+| `django.contrib.gis` removed from `INSTALLED_APPS` in `test.py`                      | Avoids GDAL system-lib requirement. The geo shim handles field types.                                                                                                                                                                                                                                                                                          |
+| `apps/api/.husky/pre-commit` has no shebang or `husky.sh` source line                | Husky v9 deprecated the old format; new format is just the command.                                                                                                                                                                                                                                                                                            |
+| `pnpm/action-setup@v4` has no `version:` input in CI                                 | It reads `packageManager` from `package.json` to avoid drift.                                                                                                                                                                                                                                                                                                  |
+| `pnpm-lock.yaml` is 14k lines and committed                                          | Required by `pnpm install --frozen-lockfile` and `setup-node` cache.                                                                                                                                                                                                                                                                                           |
+| `apps/mobile/metro.config.js` redirects `react` / `react-dom` to the workspace root  | pnpm hoists `react@19` (mobile/RN 0.81) at the root but nests `react@18` under deps with `^18 \|\| ^19` peer ranges (e.g. `@tanstack/react-query`). Without the redirect, Metro bundles two React copies → "Invalid hook call". Mobile-only; admin (Next 14) still uses `react@18` correctly.                                                                  |
+| Mobile uses `expo-secure-store` (not `AsyncStorage`) for JWT tokens                  | `AsyncStorage` writes to plaintext sqlite/MMKV on both platforms; refresh tokens are long-lived and must live in iOS Keychain / Android Keystore. The wrapper at `apps/mobile/src/auth/secureStorage.ts` falls back to in-memory only on `web` (where SecureStore is unavailable) — never to AsyncStorage.                                                     |
+| `apps/mobile/app.json` has `"typedRoutes": false`                                    | Typed routes regenerate `.expo/types/router.d.ts` on every `expo start`, making `<Link href="…">` and `router.push("…")` calls type-check against the literal route table. Convenient when stable; brittle while the route tree is still in flux (CI can't run `expo start` to regenerate the types before `tsc`). Re-enable once the route tree stops moving. |
 
 ---
 

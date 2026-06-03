@@ -1,0 +1,8 @@
+¡Bienvenido a La Yapa, {{ user.first_name|default:"amigo" }}!
+
+Gracias por unirte. Tu correo está verificado y tu cuenta lista.
+
+Cada bolsa que rescatas evita 1.2 kg de CO₂ y ahorra 50% del precio original.
+Empieza explorando bolsas cerca de ti en la app.
+
+— El equipo de La Yapa

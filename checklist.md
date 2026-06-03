@@ -74,18 +74,26 @@ Before starting the next session, ALWAYS verify:
 
 ### 🔐 **SESSION 2 — Auth + Consumer Core (Prompts 2.4 + 2.5 + 2.6 + 2.7)**
 
-#### 🔑 Auth Tests
+#### 🔑 Auth Tests _(Session 6 — backend complete, mobile screens implemented)_
 
-- 🔒 (pending: DRF auth viewsets) Register new user via email/password → success
-- 🔒 (pending: Resend integration) Email verification arrives (check Resend dashboard or MailHog locally)
-- 🔒 (pending: Simple JWT login view) Login with credentials → returns JWT
-- 🔒 (pending: django-allauth Google provider) Login with Google → works (use test Google account)
-- 🔒 (pending: django-allauth Apple provider + iOS device) Login with Apple → works (on real iOS device)
-- 🔒 (pending: password-reset flow) Forgot password → email arrives → reset works
-- 🔒 (pending: refresh token rotation wiring) Refresh token works after access token expires (wait 15min or force)
-- 🔒 (pending: JWT blacklist endpoint) Logout invalidates token
-- 🔒 (pending: any protected endpoint) Protected endpoint returns 401 without token
-- 🔒 (pending: auth tests) `pytest apps/api/users/` passes
+- [ ] Register new user via email/password → success (`POST /api/v1/auth/register`)
+- [ ] Email verification code arrives in MailHog (`http://localhost:8025`)
+- [ ] Enter the 6-digit code on `(auth)/verify-email` → routed to onboarding
+- [ ] Complete 4-step onboarding (name → language → location → dietary)
+      → land in `(consumer)` placeholder
+- [ ] Wrong code 5× → "Demasiados intentos" error, "Reenviar código" works
+- [ ] Login with credentials → returns JWT, lands in `(consumer)` directly
+- [ ] Login with role=business_owner → lands in `(business)` placeholder
+- 🔒 (pending: GOOGLE_OAUTH_CLIENT_IDS provisioned) Login with Google → works
+- 🔒 (pending: Apple Developer account + iOS device) Login with Apple → works
+- [ ] Forgot password → email arrives in MailHog with deep-link → tap →
+      `(auth)/reset-password` opens with token → reset succeeds
+- [ ] Force-expire access token: edit `SIMPLE_JWT.ACCESS_TOKEN_LIFETIME` to
+      `timedelta(seconds=5)` in `dev.py`, wait 5s, hit any authed endpoint →
+      Axios silently refreshes, request succeeds
+- [ ] Logout → second use of the same refresh returns 401
+- [ ] Cold-launch with invalid tokens in SecureStore → falls back to welcome
+- [x] `pytest apps/api/apps/users/` passes (69 tests, 94% coverage)
 
 #### 📦 Browse Tests
 

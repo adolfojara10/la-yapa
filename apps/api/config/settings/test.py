@@ -10,6 +10,13 @@ SECRET_KEY = "test-insecure"
 # Geo fields are swapped to a JSON shim by USE_GEO_SHIM below.
 INSTALLED_APPS = [a for a in INSTALLED_APPS if a != "django.contrib.gis"]
 
+# Deterministic Google/Apple client IDs for unit tests (services are mocked anyway).
+GOOGLE_OAUTH_CLIENT_IDS = ["test-google-client-id.apps.googleusercontent.com"]
+APPLE_BUNDLE_ID = "ec.layapa.app.test"
+
+# Throttling off in tests so we don't have to wait between requests.
+RATELIMIT_ENABLE = False
+
 # SQLite for unit tests.
 DATABASES = {
     "default": {

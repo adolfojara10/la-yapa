@@ -14,9 +14,13 @@ django-encrypted-model-fields==0.6.5
 cryptography>=43.0.1
 
 # ---------- Auth ----------
-djangorestframework-simplejwt==5.3.1
+djangorestframework-simplejwt[token_blacklist]==5.3.1
 django-allauth==65.0.2
 dj-rest-auth==6.0.0
+google-auth==2.35.0
+PyJWT[crypto]==2.9.0
+requests==2.32.3
+django-ratelimit==4.1.0
 
 # ---------- Async / tasks ----------
 celery==5.4.0
@@ -37,7 +41,8 @@ gunicorn==23.0.0
 whitenoise==6.7.0
 
 # ---------- Email ----------
-# Uses Django's SMTP backend → MailHog in dev, Resend in prod via SMTP
+# MailHog in dev (SMTP backend), Resend in prod (via django-anymail HTTP API)
+django-anymail[resend]==12.0
 
 # ---------- Observability ----------
 sentry-sdk==2.16.0

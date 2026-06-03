@@ -1,0 +1,9 @@
+¡Hola!
+
+Tu código de verificación de La Yapa es:
+
+    {{ code }}
+
+Vence en unos minutos. Si no fuiste tú, ignora este correo.
+
+— El equipo de La Yapa

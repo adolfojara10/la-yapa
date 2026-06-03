@@ -1,0 +1,8 @@
+Welcome to La Yapa, {{ user.first_name|default:"friend" }}!
+
+Thanks for joining. Your email is verified and your account is ready.
+
+Every bag you rescue saves ~1.2 kg of CO₂ and at least 50% off the original price.
+Open the app and explore bags near you.
+
+— The La Yapa team

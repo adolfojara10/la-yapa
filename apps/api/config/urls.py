@@ -9,14 +9,13 @@ from drf_spectacular.views import (
     SpectacularRedocView,
     SpectacularSwaggerView,
 )
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from apps.core.views import health_check
 
 api_v1_patterns = [
     path("health/", health_check, name="health-check"),
-    path("auth/token/", TokenObtainPairView.as_view(), name="token-obtain-pair"),
-    path("auth/token/refresh/", TokenRefreshView.as_view(), name="token-refresh"),
+    path("auth/", include("apps.users.auth.urls", namespace="auth")),
+    path("users/", include("apps.users.api.urls", namespace="users")),
 ]
 
 urlpatterns = [

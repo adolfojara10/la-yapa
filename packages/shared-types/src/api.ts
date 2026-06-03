@@ -10,8 +10,3 @@ export interface ApiError {
   code?: string;
   [field: string]: unknown;
 }
-
-export interface AuthTokens {
-  access: string;
-  refresh: string;
-}

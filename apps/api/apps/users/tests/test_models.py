@@ -2,7 +2,7 @@
 
 import pytest
 
-from .factories import ConsumerProfileFactory, UserFactory
+from apps.users.factories import ConsumerProfileFactory, UserFactory
 
 
 @pytest.mark.django_db

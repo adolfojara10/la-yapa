@@ -18,10 +18,10 @@ future work. Update at the end of every session.
 | Design system (`@layapa/ui`)          | ✅ v1                | Tokens single-source, light/dark, type scale, motion                                                                                  |
 | Mobile (Expo SDK 54)                  | ✅ Scaffold          | Theme + 11 components + `/design-system` + Yapi/Logo SVGs · Android dev client building on Linux (JDK 17 + ninja + Metro React-dedup) |
 | Admin (Next.js 14)                    | ✅ Scaffold          | Tailwind + next-themes + 8 shadcn-style primitives + showcase page                                                                    |
-| Django API (`apps/api`)               | ✅ Data layer        | 28 models · 23 migrations · 17 tests · 92% coverage · seed command                                                                    |
-| DRF endpoints                         | ⏳ Health-check only | Domain endpoints next                                                                                                                 |
-| Auth (JWT + social)                   | ⏳ Scaffolded        | `simplejwt` wired; allauth installed, not configured                                                                                  |
-| Mobile features (auth, browse, order) | ⏳ Not started       |                                                                                                                                       |
+| Django API (`apps/api`)               | ✅ Auth + data layer | 30 models · 24 migrations · 69 tests · 94% coverage · seed command                                                                    |
+| DRF endpoints                         | ✅ Auth complete     | 11 auth endpoints + `/users/me` GET/PATCH live; domain endpoints next                                                                 |
+| Auth (JWT + social)                   | ✅ End-to-end        | Email/password + OTP verification + Google + Apple + password reset + 15min access / 7d refresh w/ rotation + blacklist               |
+| Mobile features (auth, browse, order) | ⏳ Auth done         | 7 screens + routing guard + secure-storage + axios refresh; browse next                                                               |
 | Admin features (approvals, payouts)   | ⏳ Not started       |                                                                                                                                       |
 | Real Yapi artwork                     | ⏳ Placeholder SVGs  | Awaiting illustrator commission                                                                                                       |
 
@@ -267,6 +267,137 @@ on the device — run after a fresh `expo start -c`):
 
 ---
 
+### Session 6 — Auth system end-to-end
+
+**Built**
+
+- **Backend (`apps/api`):**
+  - 11 new endpoints under `/api/v1/auth/` (`register`, `login`, `refresh`,
+    `google`, `apple`, `verify-email`, `verify-email/resend`,
+    `forgot-password`, `reset-password`, `logout`) + `/api/v1/users/me`
+    (GET, PATCH).
+  - 2 new models in `apps.users`: `EmailVerificationCode` (6-digit OTP,
+    5-attempt lockout, 15-minute TTL) and `PasswordResetToken` (raw token
+    emailed, SHA-256 hash persisted, 30-minute TTL). User model gained
+    `is_email_verified` + `email_verified_at`. One new migration committed
+    (`0002_user_email_verified_at_user_is_email_verified_and_more.py`).
+  - Service layer in `apps/users/auth/services/`: `registration.py`
+    (email + social find-or-create, `_attach_profile` only for consumers),
+    `email_otp.py`, `password_reset.py`, `google.py`
+    (verifies via `google.oauth2.id_token.verify_oauth2_token` against
+    CSV-configured client IDs), `apple.py` (Apple JWKS fetch + RS256
+    verify, 24h key cache, refresh-on-`kid`-miss).
+  - 4 role-based DRF permissions (`ConsumerOnly`, `BusinessOwnerOnly`,
+    `AdminOnly`, `SalesRepOnly`) + `IsEmailVerified` gate in
+    `apps/users/auth/permissions.py` — downstream apps import from there.
+  - Simple JWT pinned to **15-minute access / 7-day refresh** with
+    rotation + blacklist; `token_blacklist` app + migrations applied.
+  - Throttling via `django-ratelimit` on the public surface:
+    register 20/h/ip, login 30/m/ip, social 30/m/ip, verify-email 10/h/ip,
+    resend 1/min/email + 20/h/ip, forgot-password 3/h/email + 20/h/ip.
+  - Email backend wired: MailHog in dev, `anymail.backends.resend.EmailBackend`
+    in prod. 6 email templates (verification, reset, welcome × es/en × txt/html).
+  - **69 tests passing at 94% coverage** (was 17 at 92%): registration (7),
+    login + refresh (5), verify-email + resend (7), password reset (7),
+    Google (5, fully mocked `verify_oauth2_token`), Apple (4, fully mocked
+    JWKS + `jwt.decode`), logout + blacklist (3), `/users/me` GET + PATCH (7),
+    permissions (6), models (3).
+  - New deps: `google-auth==2.35.0`, `PyJWT[crypto]==2.9.0`,
+    `requests==2.32.3`, `django-anymail[resend]==12.0`,
+    `django-ratelimit==4.1.0`.
+
+- **Mobile (`apps/mobile`):**
+  - 7 new screens under `app/(auth)/`: `welcome`, `login`, `register`
+    (with consumer/business_owner role toggle), `verify-email` (OTP input
+    with paste support, 60s resend cooldown), `forgot-password`,
+    `reset-password` (deep-link param), `onboarding` (4 steps:
+    first_name → language → location permission → dietary tags).
+  - Placeholder route groups `(consumer)` + `(business)` so the auth flow
+    has somewhere to land. Real consumer/business UIs ship in Sessions 7+.
+  - Routing guard in `app/_layout.tsx`: re-runs on every (status, user,
+    segments) change. State machine: idle → welcome, authed+unverified →
+    verify-email, consumer+!onboarding → onboarding, consumer → (consumer),
+    business_owner → (business), admin/sales_rep → forced logout (mobile
+    is consumer/business only).
+  - `src/api/client.ts` Axios instance with bearer-token request
+    interceptor and single-in-flight refresh on 401. Old refresh tokens
+    invalidated server-side after rotation; new refresh persisted to
+    SecureStore via the `onTokensRotated` callback.
+  - `src/auth/secureStorage.ts` wraps `expo-secure-store` with
+    `AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY`; web platform falls back to an
+    in-memory `Map` (NEVER `AsyncStorage` — see AGENTS.md §5).
+  - `src/auth/store.ts` Zustand store with `hydrate()`, `setAuthed()`,
+    `refreshMe()`, `logout()`. Boot sequence: hydrate → load tokens →
+    `/users/me` → set status='authed' or fall back to idle on stale tokens.
+  - `useGoogleSignIn` (expo-auth-session id-token flow) and
+    `useAppleSignIn` (expo-apple-authentication, iOS-only with `isAvailable`
+    gate).
+  - **15 Jest tests** in `apps/mobile/__tests__/`: secureStorage (4),
+    auth store transitions (5), Axios interceptors with custom adapters (3),
+    OtpInput component (3). Native modules mocked centrally in
+    `jest.setup.js`.
+  - New deps: `expo-secure-store ~15.0`, `expo-auth-session ~7.0`,
+    `expo-apple-authentication ~8.0`, `expo-crypto ~15.0`, `axios ^1.17`,
+    `expo-location` (for onboarding step 3), `@testing-library/react-native`
+    - `@types/jest` (dev).
+
+- **Shared types (`packages/shared-types`):** `user.ts` expanded with full
+  `User` + `ConsumerProfile` + `LatLng` mirroring the new serializers;
+  new `auth.ts` covers all 11 endpoint payloads/responses. `AuthTokens`
+  moved out of `api.ts` to consolidate.
+
+- **Docs:** `AGENTS.md` §4 gained a "Provisioning social auth credentials"
+  section (Google/Apple/Resend setup); §5 documents the secure-store choice
+  and the disabled `typedRoutes` setting.
+
+**Decisions**
+
+- **OTP code over magic link** for email verification. Better mobile UX
+  (no universal-links infra needed), cleaner test surface, plays nice with
+  MailHog in dev. The same code-vs-link tradeoff will likely recur for
+  phone verification in Phase 2.
+- **Custom `/auth/google` + `/auth/apple` endpoints**, not `dj-rest-auth`'s
+  bundled social URLs. allauth provides only the `SocialAccount` model +
+  email-uniqueness checks; we own the id_token verification and JWT
+  issuance entirely. Trade: a bit more code, but the API surface is shaped
+  by us, not by dj-rest-auth's defaults.
+- **Refresh rotation ON + blacklist ON**. Old refreshes are dead after a
+  refresh call; the mobile client coalesces concurrent 401s onto a single
+  refresh promise so they don't invalidate each other.
+- **`role` accepted in `POST /auth/register`** (consumer | business_owner).
+  Admin + sales_rep rejected — those come through Django admin /
+  management commands only.
+- **Mandatory onboarding gate** for consumers (first_name + at least one
+  dietary tag). Business owners skip the consumer onboarding; their
+  onboarding wizard is Session 7.
+- **`typedRoutes` disabled** — re-enable once the route tree stabilizes
+  (Session 7+); regeneration friction outweighs the type-safety win for
+  now.
+
+**Caveats / known gaps**
+
+- **Apple Sign In ships untested on device.** Server JWKS verification is
+  unit-tested with mocked keys; mobile `expo-apple-authentication` code
+  exists but no iOS hardware + Apple Developer account to run it against
+  yet (still tracked in the cross-cutting debt list).
+- **Refresh-token rotation invalidates the previous refresh.** A client
+  that loses its in-memory state mid-rotation will be forced through
+  re-login. The Axios interceptor handles the in-app case; cold-launch
+  with a stale refresh just lands on welcome.
+- **Resend not wired in prod yet.** Settings select the backend but the
+  API key + verified domain need to be provisioned (instructions are in
+  AGENTS.md §4).
+- **Google client IDs empty in `.env.example`.** Mobile + API will reject
+  Google sign-in attempts until the Cloud Console setup in AGENTS.md §4
+  is done — that's intentional, not a regression.
+- **No E2E (Detox / Playwright) coverage** — still listed in cross-cutting
+  debt; deferred to its own session.
+- **`pnpm test` at the repo root won't run API pytest** (script invokes
+  `pytest` without venv activation). CI runs them correctly in its
+  dedicated job; locally, `cd apps/api && source .venv/bin/activate && pytest`.
+
+---
+
 ## 🎯 Next-up priorities
 
 ### Phase 1 — Consumer Core MVP (Weeks 3-6 of the master roadmap)
@@ -276,16 +407,12 @@ on the device — run after a fresh `expo start -c`):
    status=COMPLETED" pattern and gives the impact signal a stable invocation
    point.
 2. **DRF viewsets + serializers**:
-   - `POST /api/v1/auth/register/`, `POST /auth/login/` (Simple JWT)
    - `GET /api/v1/bags/nearby/?lat&lng&radius_km` (PostGIS `dwithin`)
    - `GET/POST /api/v1/orders/`, `POST /orders/{id}/cancel/`, `POST /orders/{id}/checkout/`
    - `GET /api/v1/businesses/{id}/`
    - `POST /api/v1/businesses/{id}/favorite/`
 3. **Mapbox geocoding** in `BusinessLocation.save()` hook.
-4. **Social auth** — `django-allauth` + `dj-rest-auth` for Google + Apple.
-5. **Mobile auth flow** — login/register screens + secure token storage
-   (Expo SecureStore).
-6. **Mobile bag discovery** — map screen, list screen, bag detail, reservation,
+4. **Mobile bag discovery** — map screen, list screen, bag detail, reservation,
    pickup code screen.
 
 ### Phase 2 — Business core (Weeks 7-9)
@@ -326,14 +453,14 @@ on the device — run after a fresh `expo start -c`):
 ## 🔢 Stats snapshot
 
 ```
-JS / TS files:    ~75 (mobile + admin + packages)
-Python files:     ~80 (apps + migrations + config)
-Django models:    28
-Migrations:       23
-Tests passing:    17 (Python), 0 (JS — none authored yet)
-Coverage (API):   92%
+JS / TS files:    ~100 (mobile + admin + packages)
+Python files:     ~95 (apps + migrations + config)
+Django models:    30
+Migrations:       24
+Tests passing:    69 (Python), 15 (JS — mobile auth)
+Coverage (API):   94%
 CI duration:      ~3 min (JS job) + ~2 min (Django job)
-Dependencies:     ~1500 npm packages, ~120 Python packages (with dev extras)
+Dependencies:     ~1530 npm packages, ~130 Python packages (with dev extras)
 ```
 
 ---
