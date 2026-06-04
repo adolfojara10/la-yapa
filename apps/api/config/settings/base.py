@@ -192,6 +192,37 @@ EMAIL_VERIFICATION_MAX_ATTEMPTS = 5
 FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:3000")
 MOBILE_DEEP_LINK_SCHEME = env("MOBILE_DEEP_LINK_SCHEME", default="layapa")
 
+# ---------- Payments ----------
+# Switch to True for tests + local dev without real provider credentials.
+# When True, `apps.payments.providers.get_provider` returns a FakePaymentProvider
+# regardless of `provider_name`, so HTTP never leaves the process.
+USE_FAKE_PAYMENT_PROVIDER = env.bool("USE_FAKE_PAYMENT_PROVIDER", default=False)
+
+PAYPHONE_API_KEY = env("PAYPHONE_API_KEY", default="")
+PAYPHONE_SECRET = env("PAYPHONE_SECRET", default="")
+PAYPHONE_WEBHOOK_SECRET = env("PAYPHONE_WEBHOOK_SECRET", default="")
+PAYPHONE_BASE_URL = env("PAYPHONE_BASE_URL", default="https://pay.payphonetodoesposible.com")
+
+DEUNA_PUBLIC_KEY = env("DEUNA_PUBLIC_KEY", default="")
+DEUNA_SECRET_KEY = env("DEUNA_SECRET_KEY", default="")
+DEUNA_WEBHOOK_SECRET = env("DEUNA_WEBHOOK_SECRET", default="")
+DEUNA_BASE_URL = env("DEUNA_BASE_URL", default="https://api.deuna.com/v1")
+
+# Webhook hardening
+PAYMENT_WEBHOOK_REPLAY_WINDOW_SECONDS = env.int(
+    "PAYMENT_WEBHOOK_REPLAY_WINDOW_SECONDS", default=600
+)
+# Per-provider CIDR allowlist. Empty list = allow any (dev / staging).
+# Populate from CSV env var:  PAYMENT_WEBHOOK_IPS_PAYPHONE=1.2.3.0/24,5.6.7.0/24
+PAYMENT_WEBHOOK_IP_ALLOWLIST = {
+    "payphone": env.list("PAYMENT_WEBHOOK_IPS_PAYPHONE", default=[]),
+    "de_una": env.list("PAYMENT_WEBHOOK_IPS_DE_UNA", default=[]),
+}
+
+# Bonus credit defaults
+BUSINESS_CANCELLATION_BONUS_AMOUNT = env("BUSINESS_CANCELLATION_BONUS_AMOUNT", default="1.00")
+BUSINESS_CANCELLATION_BONUS_TTL_DAYS = env.int("BUSINESS_CANCELLATION_BONUS_TTL_DAYS", default=90)
+
 # ---------- DRF ----------
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (

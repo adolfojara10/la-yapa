@@ -5,6 +5,7 @@ import { useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ActiveOrderBanner } from '@/browse/ActiveOrderBanner';
 import { BagListView } from '@/browse/BagListView';
 import { BagMapView } from '@/browse/BagMapView';
 import { FiltersSheet, type FiltersSheetHandle } from '@/browse/FiltersSheet';
@@ -28,6 +29,7 @@ export default function BrowseScreen() {
         onToggleView={() => setView((v) => (v === 'list' ? 'map' : 'list'))}
         onOpenFilters={() => filtersRef.current?.expand()}
       />
+      <ActiveOrderBanner />
       <View style={{ flex: 1 }}>
         {view === 'list' ? <BagListView location={location} /> : <BagMapView location={location} />}
       </View>

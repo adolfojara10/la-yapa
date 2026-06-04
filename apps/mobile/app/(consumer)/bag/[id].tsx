@@ -1,8 +1,5 @@
 /**
- * Bag detail screen with sticky reserve CTA.
- *
- * The CTA is intentionally a stub this session — tapping shows a toast.
- * Real reservation/checkout ships in Session 8 (orders + payments).
+ * Bag detail screen with sticky reserve CTA → navigates to checkout.
  */
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -21,7 +18,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/Button';
 import { Text } from '@/components/ui/Text';
-import { useToast } from '@/components/ui/Toast';
 import { useBag } from '@/hooks/useBag';
 import { useUserLocation } from '@/hooks/useUserLocation';
 import { useTheme } from '@/theme';
@@ -55,7 +51,6 @@ function pickupCountdown(start: string, end: string, now: Date): string {
 export default function BagDetailScreen() {
   const { theme } = useTheme();
   const router = useRouter();
-  const toast = useToast();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { location } = useUserLocation();
   const query = useBag(id, location);
@@ -257,12 +252,7 @@ export default function BagDetailScreen() {
           <Button
             variant="primary"
             size="lg"
-            onPress={() =>
-              toast.show({
-                title: 'El checkout llega en la próxima sesión.',
-                tone: 'info',
-              })
-            }
+            onPress={() => router.push(`/(consumer)/checkout/${bag.id}`)}
           >
             Reservar por ${total}
           </Button>

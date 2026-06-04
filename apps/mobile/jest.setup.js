@@ -26,7 +26,10 @@ jest.mock('expo-auth-session', () => ({}));
 jest.mock('expo-auth-session/providers/google', () => ({
   useIdTokenAuthRequest: () => [null, null, jest.fn()],
 }));
-jest.mock('expo-web-browser', () => ({ maybeCompleteAuthSession: jest.fn() }));
+jest.mock('expo-web-browser', () => ({
+  maybeCompleteAuthSession: jest.fn(),
+  openAuthSessionAsync: jest.fn(),
+}));
 jest.mock('expo-apple-authentication', () => ({
   isAvailableAsync: jest.fn(async () => false),
   signInAsync: jest.fn(),
@@ -44,6 +47,19 @@ jest.mock('expo-image', () => {
   const { View } = require('react-native');
   return { Image: View };
 });
+
+// react-native-qrcode-svg: inert View.
+jest.mock('react-native-qrcode-svg', () => {
+  const { View } = require('react-native');
+  return { __esModule: true, default: View };
+});
+
+// expo-linking is used by checkout for deep-link return URL building.
+jest.mock('expo-linking', () => ({
+  createURL: (path, opts = {}) =>
+    `layapa://${path}${opts.queryParams ? '?' + new URLSearchParams(opts.queryParams).toString() : ''}`,
+  openURL: jest.fn(),
+}));
 
 // @rnmapbox/maps: pure inert mock — tests don't render the map screen.
 jest.mock('@rnmapbox/maps', () => {

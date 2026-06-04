@@ -5,8 +5,8 @@ import uuid
 
 import pytest
 
-from .factories import OrderFactory
-from .models import OrderStatus
+from apps.orders.factories import OrderFactory
+from apps.orders.models import OrderStatus
 
 
 @pytest.mark.django_db

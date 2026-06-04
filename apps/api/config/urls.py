@@ -17,6 +17,7 @@ api_v1_patterns = [
     path("auth/", include("apps.users.auth.urls", namespace="auth")),
     path("users/", include("apps.users.api.urls", namespace="users")),
     path("consumer/", include("apps.consumer.urls", namespace="consumer")),
+    path("payments/", include("apps.payments.urls", namespace="payments")),
 ]
 
 urlpatterns = [

@@ -278,6 +278,89 @@ empty grid. List view and all filters remain fully functional in that
 degraded state. The empty grid is the expected behavior for an
 unauthenticated Mapbox client; it's not a crash.
 
+### Provisioning payment providers
+
+The checkout flow integrates two providers — PayPhone (card payments) and
+DeUna (Ecuadorian QR wallet). Both follow the same shape: the backend
+calls a REST endpoint to create a hosted-checkout session, the mobile
+client opens the returned URL in a WebView (`expo-web-browser`), and the
+provider POSTs a signed webhook back when the payment captures.
+
+**PayPhone** (`dev.payphone.app`):
+
+1. Register a developer account → create an app → switch to **sandbox** mode.
+2. Copy the API key, app secret, and **webhook signing secret** into
+   `apps/api/.env`:
+   - `PAYPHONE_API_KEY=...`
+   - `PAYPHONE_SECRET=...`
+   - `PAYPHONE_WEBHOOK_SECRET=...` (the HMAC key PayPhone signs webhooks with)
+3. In PayPhone's dashboard, set the webhook URL to
+   `https://<your-ngrok-host>/api/v1/payments/payphone/webhook`
+   (see "Testing webhooks locally" below).
+4. Use PayPhone's documented test card numbers in the WebView during
+   sandbox testing. Production requires SRI tax-ID submission (RUC).
+
+**DeUna** (`deuna.com` developer portal):
+
+1. Register → create a sandbox app.
+2. Copy keys into `apps/api/.env`:
+   - `DEUNA_PUBLIC_KEY=...`
+   - `DEUNA_SECRET_KEY=...`
+   - `DEUNA_WEBHOOK_SECRET=...`
+3. Webhook URL: `https://<your-ngrok-host>/api/v1/payments/de-una/webhook`.
+4. Production requires a verified Ecuadorian RUC.
+
+**`USE_FAKE_PAYMENT_PROVIDER=True`** routes ALL provider HTTP to
+`FakePaymentProvider` (deterministic, no network). Tests always run this
+way; local dev sets it whenever real keys aren't present. Webhooks signed
+by the fake's HMAC key are accepted at the same endpoints (the test suite
+exercises this end-to-end).
+
+### Testing webhooks locally
+
+Providers need a public HTTPS URL to deliver webhooks. Easiest path:
+
+```bash
+ngrok http 8000          # in a separate terminal
+# → https://abcd-1234.ngrok-free.app
+# Paste that URL + "/api/v1/payments/<provider>/webhook" into the
+# provider's dashboard webhook settings.
+```
+
+`PAYMENT_WEBHOOK_IP_ALLOWLIST` is empty in dev, so the IP check is
+skipped. Populate the per-provider CIDR list in `prod.py` once you have
+the providers' official source IPs documented.
+
+For replaying captured webhook payloads without ngrok (e.g. debugging the
+dispatcher logic), write a Django shell snippet that POSTs to
+`/api/v1/payments/<provider>/webhook` with HMAC headers signed by your
+local secret — the `apps.payments.providers.fake.FakePaymentProvider.sign()`
+helper is the reference impl.
+
+### Payment provider roadmap (Phase 2)
+
+Today both providers ship via hosted-checkout WebView (`expo-web-browser`).
+The `runCheckout(session)` abstraction in `apps/mobile/src/payments/`
+already inspects `session.sdk_payload` and routes to a native SDK when
+populated; today no provider populates it, so the SDK path is unreachable.
+
+The post-launch plan:
+
+1. **Stripe joins as a third provider** for international cards + Apple
+   Pay + Google Pay. Stripe's native React Native SDK
+   (`@stripe/stripe-react-native`) provides the platform-native payment
+   sheet on both iOS and Android. PayPhone + DeUna stay the Ecuador
+   defaults; Stripe activates when the user picks "Tarjeta internacional"
+   or taps Apple/Google Pay.
+2. **PayPhone swaps to its native RN SDK** (when/if PayPhone publishes
+   one — package name TBD) for UX parity with Stripe. The swap is a
+   single-file change in `apps/mobile/src/payments/runCheckout.ts`.
+3. **DeUna stays on WebView** until DeUna ships a native RN SDK; their
+   current iOS-only / Android-only native libs would require a custom
+   Expo Modules wrapper that isn't worth the engineering for parity.
+
+Until then, the WebView-only checkout is the supported flow.
+
 ---
 
 ## 5. Things that look wrong but are correct

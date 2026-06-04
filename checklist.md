@@ -115,28 +115,62 @@ Before starting the next session, ALWAYS verify:
 - 🔒 (pending: Mapbox tokens) Tap marker → bottom sheet opens with that location's bags
 - 🔒 (pending: real Yapi artwork) Empty state shows Yapi sleepy illustration
 
-#### 💳 Checkout Tests (Use PayPhone/DeUna sandbox/test mode)
+#### 💳 Checkout Tests _(Session 8 — backend + mobile complete; provider integration unverified)_
 
-- 🔒 (pending: checkout screen) Checkout summary correct (price, taxes if any)
-- 🔒 (pending: PayPhone SDK) PayPhone test card → payment succeeds
-- 🔒 (pending: DeUna SDK) DeUna sandbox → payment succeeds
-- 🔒 (pending: payment webhook handler) Order created in DB with status=paid
-- 🔒 (pending: QR/PIN generation on order finalize) QR code + PIN generated
-- 🔒 (pending: Expo push wiring) Push notification arrives on payment success
-- 🔒 (pending: webhook signature validation) Payment webhook handled correctly (test with curl/Postman)
-- 🔒 (pending: failed-payment branch) Failed payment → order status updated, user notified
-- 🔒 (pending: refund flow + 1h window check) Cancel within 1h window → refund triggered
-- 🔒 (pending: 1h-window enforcement) Cancel after 1h → blocked with error message
-- 🔒 (pending: payments app tests) `pytest apps/api/payments/` passes (with mocked providers)
+**Tests passing today against `FakePaymentProvider` (USE_FAKE_PAYMENT_PROVIDER=True)**:
 
-#### 🎫 Pickup Tests
+- [x] `pytest apps/payments/ apps/orders/ apps/consumer/tests/test_orders_endpoints.py` → 162 backend tests pass at 90% coverage
+- [x] Checkout screen renders order summary (image, business, title, pickup window, total)
+- [x] Payment method selector toggles between PayPhone / DeUna
+- [x] "Donar como comida suspendida" toggle persists into the POST body
+- [x] Terms checkbox gates the pay button (disabled until checked)
+- [x] Pay → creates order in `pending_payment`, decrements bag inventory atomically
+- [x] WebView opens with the fake provider's URL (no real network)
+- [x] Order detail shows "Esperando confirmación de pago" banner while pending
+- [x] Order detail polls `/orders/{id}` every 2s; flips to QR+PIN block once status → `paid`
+- [x] Cancel >1h before pickup → routes through refund flow → status `refunded` (fake provider is sync)
+- [x] Cancel ≤1h before pickup → blocked with "Ya pasó la ventana de cancelación" (409 from API)
+- [x] Active-order banner appears on Explorar tab for non-terminal orders
+- [x] Order history (Perfil → "Mis pedidos") lists all orders with status badges
+- [x] Bonus credit redemption: `POST /consumer/orders/{id}/redeem-credit` reduces `total_paid` by credit amount (clamped)
 
-- 🔒 (pending: order detail screen) Order detail shows QR code (scannable) + 4-digit PIN
-- 🔒 (pending: pickup-window countdown) Countdown to pickup window displays correctly
-- 🔒 (pending: Celery reminder schedule) Pickup reminder push arrives 1h before window closes
-- 🔒 (pending: Celery reminder schedule) Pickup reminder push arrives 30min before window closes
-- 🔒 (pending: directions deep link) Get directions opens map app
-- 🔒 (pending: `Order.complete()` service) After pickup confirmed (next session) → status changes to "completed"
+**🔒 Real-provider smoke — REQUIRES SANDBOX ACCOUNTS BEFORE THIS CAN BE EXERCISED**:
+
+> ⚠️ **BLOCKER**: PayPhone + DeUna sandbox accounts have not been provisioned.
+> All backend tests pass against `FakePaymentProvider`, but the FIRST REAL
+> PAYMENT will be the first time PayPhone's / DeUna's actual webhook payload
+> shapes are validated. The provider classes use defensive field lookups
+> (camelCase + PascalCase), but real-world divergence is likely.
+> See AGENTS.md §4 "Provisioning payment providers" for setup steps.
+>
+> Once accounts are provisioned, capture sample webhook payloads from each
+> provider's sandbox and add fixture-based unit tests so the dispatcher
+> stays correct against real schemas.
+
+- 🔒 (pending: PayPhone sandbox account + `PAYPHONE_API_KEY` / `PAYPHONE_SECRET` / `PAYPHONE_WEBHOOK_SECRET`) PayPhone WebView opens with sandbox card form
+- 🔒 (pending: PayPhone test card) Card payment succeeds in PayPhone sandbox
+- 🔒 (pending: ngrok + PayPhone dashboard webhook URL) Webhook arrives → order flips to `paid`
+- 🔒 (pending: PayPhone refund API call) Cancel paid order → refund webhook → status flips to `refunded`
+- 🔒 (pending: DeUna sandbox account + `DEUNA_PUBLIC_KEY` / `DEUNA_SECRET_KEY` / `DEUNA_WEBHOOK_SECRET`) DeUna WebView opens with sandbox QR
+- 🔒 (pending: DeUna webhook delivery) DeUna payment webhook arrives → order flips to `paid`
+- 🔒 (pending: DeUna refund API call) DeUna refund flow completes end-to-end
+- 🔒 (pending: real Expo push token from device) Push notification arrives on payment.succeeded
+- 🔒 (pending: provider response fixtures) Add unit tests with captured real-provider webhook bodies so any schema drift fails CI
+
+**Code changes likely needed once sandbox accounts land**:
+
+- 🔒 Adjust `parse_event` field-name lookups in `apps/payments/providers/payphone.py` and `de_una.py` to match real payload keys
+- 🔒 Populate `PAYMENT_WEBHOOK_IP_ALLOWLIST` in `prod.py` with provider source CIDRs
+- 🔒 Verify HMAC algorithm + header name match each provider's actual docs (currently HMAC-SHA256 + `X-PayPhone-Signature` / `X-DeUna-Signature`)
+- 🔒 Capture real-provider success + failure webhook samples, add as fixtures under `apps/payments/tests/fixtures/`
+
+#### 🎫 Pickup Tests _(Session 8 — consumer-side QR/PIN + countdown live; business-side scanner is Session 9)_
+
+- [x] Order detail shows QR code (encodes `pickup_qr_token`) + 4-digit PIN
+- [x] Pickup-window countdown ticks ("Abre en 2h 15min" / "Cierra en 1h 30min" / "Ventana cerrada")
+- [x] "Cómo llegar" tap opens Google Maps with the business location's coordinates
+- 🔒 (pending: Celery worker started + beat schedule) Pickup reminder push arrives 1h + 30min before window closes
+- 🔒 (pending: business app scanner — Session 9) After pickup confirmed → consumer's status flips to `completed`
 
 #### 🚨 Red Flags
 

@@ -14,6 +14,9 @@ export default function ConsumerLayout() {
     >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="bag/[id]" options={{ title: '', headerTransparent: true }} />
+      <Stack.Screen name="checkout/[bagId]" options={{ title: 'Pago' }} />
+      <Stack.Screen name="orders/index" options={{ title: 'Mis pedidos' }} />
+      <Stack.Screen name="orders/[id]" options={{ title: 'Pedido' }} />
     </Stack>
   );
 }

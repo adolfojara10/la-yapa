@@ -10,20 +10,21 @@ future work. Update at the end of every session.
 
 ## 🔭 Current state (at a glance)
 
-| Layer                                 | Status                    | Notes                                                                                                                                 |
-| ------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Monorepo (pnpm + Turborepo)           | ✅ Working                | `pnpm install` clean, lockfile committed                                                                                              |
-| CI (GitHub Actions)                   | ✅ Green                  | JS job + Django job (PostGIS + Redis service containers)                                                                              |
-| Pre-commit hooks                      | ✅ Working                | Husky → Prettier on JS/MD; Python via separate `pre-commit`                                                                           |
-| Design system (`@layapa/ui`)          | ✅ v1                     | Tokens single-source, light/dark, type scale, motion                                                                                  |
-| Mobile (Expo SDK 54)                  | ✅ Scaffold               | Theme + 11 components + `/design-system` + Yapi/Logo SVGs · Android dev client building on Linux (JDK 17 + ninja + Metro React-dedup) |
-| Admin (Next.js 14)                    | ✅ Scaffold               | Tailwind + next-themes + 8 shadcn-style primitives + showcase page                                                                    |
-| Django API (`apps/api`)               | ✅ Auth + data + consumer | 30 models · 24 migrations · 102 tests · 91% coverage · enriched seed command                                                          |
-| DRF endpoints                         | ✅ Auth + consumer browse | 11 auth endpoints + `/users/me` + 4 consumer endpoints (bags list/detail, reviews, favorites toggle)                                  |
-| Auth (JWT + social)                   | ✅ End-to-end             | Email/password + OTP verification + Google + Apple + password reset + 15min access / 7d refresh w/ rotation + blacklist               |
-| Mobile features (auth, browse, order) | ✅ Browse done            | List/map toggle, infinite scroll, 6-axis filters, Mapbox markers + bottom sheet, bag detail w/ sticky CTA stub; order next            |
-| Admin features (approvals, payouts)   | ⏳ Not started            |                                                                                                                                       |
-| Real Yapi artwork                     | ⏳ Placeholder SVGs       | Awaiting illustrator commission                                                                                                       |
+| Layer                                 | Status                               | Notes                                                                                                                                 |
+| ------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Monorepo (pnpm + Turborepo)           | ✅ Working                           | `pnpm install` clean, lockfile committed                                                                                              |
+| CI (GitHub Actions)                   | ✅ Green                             | JS job + Django job (PostGIS + Redis service containers)                                                                              |
+| Pre-commit hooks                      | ✅ Working                           | Husky → Prettier on JS/MD; Python via separate `pre-commit`                                                                           |
+| Design system (`@layapa/ui`)          | ✅ v1                                | Tokens single-source, light/dark, type scale, motion                                                                                  |
+| Mobile (Expo SDK 54)                  | ✅ Scaffold                          | Theme + 11 components + `/design-system` + Yapi/Logo SVGs · Android dev client building on Linux (JDK 17 + ninja + Metro React-dedup) |
+| Admin (Next.js 14)                    | ✅ Scaffold                          | Tailwind + next-themes + 8 shadcn-style primitives + showcase page                                                                    |
+| Django API (`apps/api`)               | ✅ Auth + data + consumer + checkout | 32 models · 26 migrations · 162 tests · 90% coverage · enriched seed                                                                  |
+| DRF endpoints                         | ✅ Auth + browse + checkout          | 11 auth + `/users/me` + 4 browse + 5 orders + 1 charge + 2 webhooks + bonus-credit                                                    |
+| Auth (JWT + social)                   | ✅ End-to-end                        | Email/password + OTP verification + Google + Apple + password reset + 15min access / 7d refresh w/ rotation + blacklist               |
+| Mobile features (auth, browse, order) | ✅ Checkout WebView                  | Order create + payment WebView + QR/PIN order detail + cancel flow + bonus credits surfaced                                           |
+| Payments (PayPhone, DeUna)            | ✅ Backend, ⚠️ unverified            | Provider classes + webhook handlers + refund flow + state machine all built; **no real sandbox account yet** (see checklist)          |
+| Admin features (approvals, payouts)   | ⏳ Not started                       |                                                                                                                                       |
+| Real Yapi artwork                     | ⏳ Placeholder SVGs                  | Awaiting illustrator commission                                                                                                       |
 
 ---
 
@@ -532,19 +533,183 @@ on the device — run after a fresh `expo start -c`):
 
 ## 🎯 Next-up priorities
 
+### Session 8 — Checkout flow end-to-end (PayPhone + DeUna)
+
+**Built**
+
+- **Backend (`apps.payments` + `apps.orders` + `apps.consumer`):**
+  - New models: `BonusCredit` (user, amount, source-tagged, expires_at,
+    redeemed_in_order), `WebhookEventLog` (dedupe by provider+event_id).
+  - `Order` gained: `PENDING_REFUND` status, `refund_failed_at`,
+    `donate_as_suspended_meal`, `applied_credit_amount`,
+    `is_within_consumer_cancel_window()` helper.
+  - `PaymentTransaction` gained: `refund_provider_transaction_id`,
+    `refund_amount`, `refunded_at`, `REFUND_PENDING`/`REFUND_FAILED` statuses,
+    unique constraint on `(provider, provider_transaction_id)`.
+  - One new migration each in `apps.orders` (0003) and `apps.payments` (0003).
+  - State machine (`apps.orders.state_machine`) documents all 11 allowed
+    transitions; `assert_can_transition` is the single boundary every
+    service goes through.
+  - Order services: `create_order` (SELECT FOR UPDATE on Bag, decrements
+    inventory in same txn as Order create), `cancel_order` (window check
+    for consumers, bonus credit for business cancellation, refund routing
+    for paid orders via `transaction.on_commit`), `complete_order`,
+    `expire_stale_pending` (cron, restores inventory).
+  - Payment provider abstraction (`apps.payments.providers.base`): four
+    methods (`create_charge`, `refund`, `verify_signature`, `parse_event`).
+    Three concrete providers: `PayPhoneProvider` + `DeUnaProvider` (real
+    HTTP via `requests`, HMAC-SHA256 signature verify), `FakePaymentProvider`
+    (deterministic, used by all tests + local dev w/o credentials).
+  - `apps.payments.services`: `process_payment` (creates session + pending
+    tx, idempotent on order status), `refund_payment` (post-commit from
+    cancel_order; on success flips order to REFUNDED, on failure marks
+    `refund_failed_at` for ops), `apply_bonus_credit` (5-rule validation:
+    own credit, not redeemed, not expired, order in pending_payment, clamp
+    to total).
+  - Webhook dispatcher (`apps.payments.webhooks`): IP allowlist → HMAC
+    verify → replay-window check → idempotency dedupe → event dispatch.
+    Same 401 response regardless of which check failed (no leak). Handles
+    payment.succeeded (flips PAID, triggers SuspendedMealDonation creation
+    if donate flag set, sends push), payment.failed (cancels order +
+    restores inventory), refund.succeeded (PENDING_REFUND → REFUNDED),
+    refund.failed (sets refund_failed_at).
+  - 4 new endpoints under `/api/v1/consumer/orders/*`:
+    `POST` (create), `GET` (list), `GET {id}`, `POST {id}/cancel`,
+    `POST {id}/redeem-credit`, plus `GET /consumer/bonus-credits` and
+    `POST /api/v1/payments/charge` + 2 webhook routes.
+  - `apps.notifications.services.send_push` — Expo HTTP push dispatcher,
+    honors `NotificationPreference.order_updates`, deactivates expired
+    tokens. Called synchronously from the webhook (no Celery worker yet).
+  - **+60 new backend tests** across orders + payments + consumer.
+    Total backend tests: **162 at 90% coverage** (was 102/91%).
+  - Per-provider HTTP code is at 24-25% coverage — `FakePaymentProvider`
+    routes all test traffic; real-provider response shapes only validated
+    against actual sandboxes (which aren't provisioned — see Caveats).
+
+- **Mobile (`apps/mobile`):**
+  - Checkout screen (`(consumer)/checkout/[bagId].tsx`): order summary,
+    payment method selector (PayPhone / DeUna), donate-as-suspended-meal
+    toggle, terms checkbox gate, sticky pay button. POSTs order, then
+    charge, then opens WebView via `expo-web-browser.openAuthSessionAsync`,
+    then routes to order detail.
+  - Order detail screen (`(consumer)/orders/[id].tsx`): polls `/orders/{id}`
+    every 2s while non-terminal. Shows QR (via `react-native-qrcode-svg`)
+    - 4-digit PIN + pickup countdown + "Cómo llegar" link to Google Maps
+    - cancel button (only when within window + non-terminal). Three banner
+      states: "Esperando confirmación" (pending_payment), "Reembolso en
+      proceso" (pending_refund), QR+PIN block (paid).
+  - Order history (`(consumer)/orders/index.tsx`): paginated list with
+    status badges.
+  - `runCheckout` abstraction (`src/payments/runCheckout.ts`): inspects
+    `session.sdk_payload` to route between WebView (today) and native SDK
+    (Phase 2 path, currently unreachable). Returns
+    `completed_in_webview | cancelled | failed`; UI always trusts the
+    polled order status, never the SDK callback.
+  - `ActiveOrderBanner` pinned to top of Explorar tab — shows when consumer
+    has any non-terminal order; one-tap path to QR/PIN.
+  - Perfil tab gained "Mis pedidos" link above the logout button.
+  - Components: `PickupQrCode`, `PickupCountdown`, `OrderStatusBadge`.
+  - Hooks: `useOrder` (2s polling), `useOrders`, `useActiveOrder`.
+  - **+5 mobile tests** (41 total): `runCheckout` dispatch table,
+    `PickupCountdown` time-based rendering, `OrderStatusBadge` per-status
+    labels.
+  - New deps: `react-native-qrcode-svg ~6.x`. No native rebuild required
+    (pure JS rendering via `react-native-svg` which is already installed).
+
+- **Shared types:** `order.ts` rewritten snake_case to mirror DRF;
+  new `payment.ts` for `ChargeSessionResponse` + `CreateChargePayload`.
+  New types for `BonusCredit`, `CancelOrderResponse`, `RedeemCreditPayload`.
+
+- **Docs:** `AGENTS.md` §4 gained three new subsections:
+  "Provisioning payment providers" (PayPhone + DeUna sandbox + env vars),
+  "Testing webhooks locally" (ngrok recipe + fake-provider sign helper),
+  "Payment provider roadmap (Phase 2)" — captures the decision to add
+  Stripe as the third provider (Apple Pay + Google Pay + intl cards) and
+  swap PayPhone to its native RN SDK at the same time.
+
+**Decisions**
+
+- **Hosted-checkout WebView for both providers** this session. PayPhone
+  has an RN SDK but the package name is unverified; DeUna has no RN SDK.
+  `runCheckout` abstraction supports the SDK path; it's the one-file swap
+  that makes Phase 2 native-SDK migration trivial.
+- **Pessimistic refund state (`pending_refund` → `refunded`).** Order
+  flips immediately to PENDING_REFUND on consumer/business cancel of a
+  PAID order; final REFUNDED requires the provider's refund webhook (or
+  synchronous success from FakePaymentProvider in dev). Honest UX
+  ("reembolso en proceso, 1-3 días hábiles") over the prettier-but-false
+  "refunded instantly" pattern.
+- **Bonus credit as its own table** with explicit source + expiry. Future
+  referral / promo credits reuse the same model. PayoutLineItem of type
+  `bonus_credit_deduction` ties the $1 grant to the originating business's
+  next payout.
+- **Cancellation cutoff: 1h before `pickup_window_start`.** Matches Too
+  Good To Go's policy; aligns with the surplus-food domain (business has
+  already prepped the bag closer to pickup).
+- **DB-level inventory locking** via `SELECT FOR UPDATE` on Bag in
+  `create_order`. Concurrent orders for the last unit serialize; the
+  loser gets `insufficient_stock`.
+- **Webhook auth: HMAC + IP allowlist + 10-min replay window**, returning
+  same 401 regardless of which check failed. Empty allowlist in
+  dev/staging so ngrok works without per-test config.
+- **`USE_FAKE_PAYMENT_PROVIDER` env flag** routes all provider HTTP through
+  the deterministic fake when no real keys are set. Test settings always
+  set it; local dev sets it implicitly until keys land.
+- **Push notifications sync, not Celery.** Called from the webhook handler
+  directly — latency is fine inside a 200ms webhook. Celery + worker is a
+  later infra session.
+
+**Caveats / known gaps**
+
+- **No PayPhone or DeUna sandbox account provisioned yet.** All tests pass
+  against `FakePaymentProvider`; the first real-money call will be the
+  first time PayPhone's / DeUna's actual response shapes are validated.
+  The provider classes use defensive lookups (camelCase + PascalCase) but
+  expect to need tweaks on first contact. See `checklist.md` Session 8
+  "Real-provider smoke" block — **provisioning sandbox accounts is a
+  blocker for declaring checkout production-ready**. If providers' real
+  payloads differ from the documented field names in
+  `apps/payments/providers/{payphone,de_una}.py`, fixture-based tests
+  should be added against captured responses in a follow-up session.
+- **Apple Pay / Google Pay not supported** until Phase 2 (Stripe
+  integration). PayPhone native SDK swap waits for either PayPhone to
+  publish an RN package or for us to wrap their native lib via Expo
+  Modules. Documented in AGENTS.md §4.
+- **Refund call is sync inline (`transaction.on_commit`), not Celery.**
+  If the provider's refund API hangs, the request that triggered the
+  cancellation hangs with it. Acceptable at MVP volume (~10 cancellations
+  per day); move to Celery before any volume that matters.
+- **Business-cancel + confirm-pickup flows have no UI yet.** Endpoints
+  exist server-side (`cancel_order` accepts `actor='business'`,
+  `complete_order` flips PAID → COMPLETED), but the business app screens
+  to invoke them ship in Session 9. Today only consumer-side cancel is
+  reachable from the mobile app.
+- **`expire_stale_pending` cron job not scheduled.** Function is tested
+  and ready; needs to be wired into Celery beat or an external scheduler.
+  Without it, abandoned `pending_payment` orders sit forever (just take
+  up an inventory unit each).
+- **SuspendedMealDonation created on payment success doesn't notify the
+  business yet.** Model row appears; the business notification flow lands
+  with the business-side suspended-meals UI in Phase 2.
+
+---
+
+## 🎯 Next-up priorities
+
 ### Phase 1 — Consumer Core MVP (Weeks 3-6 of the master roadmap)
 
-1. **Orders service layer + checkout** — `Order.create()`,
-   `Order.complete()`, `Order.cancel()`, state-machine validation. Wires
-   up the sticky CTA stubbed in Session 7. Payments integration (PayPhone,
-   DeUna) lands alongside.
-2. **Pickup flow** — QR/PIN screens on both consumer and business mobile;
-   `POST /orders/{id}/confirm-pickup` viewset.
-3. **Favorites list UI** — turn the placeholder Favoritos tab into a
-   real list of favorited businesses with their active bags.
-4. **Profile tab fleshed out** — edit profile, language toggle, dietary
-   preferences edit (re-uses onboarding components), referral code share.
-5. **Mapbox geocoding proxy** on the backend with caching, so the mobile
+1. **Business-side mobile** — bag CRUD, today's orders list, scan QR /
+   PIN entry → calls `complete_order`. Closes the pickup loop.
+2. **Provision PayPhone + DeUna sandbox accounts** and run the real-
+   provider smoke checklist; fix any payload-shape divergences from the
+   defensive parsers.
+3. **Celery worker setup** — async refund task + scheduled
+   `expire_stale_pending` + push notification batching.
+4. **Favorites list UI** — turn the placeholder Favoritos tab into a
+   real list with active-bag indicators per business.
+5. **Profile tab fleshed out** — edit profile, language toggle, dietary
+   preferences, referral code share + redemption.
+6. **Mapbox geocoding proxy** on the backend with caching, so the mobile
    geocoder isn't hitting Mapbox direct and we get one place to add
    per-user rate limiting.
 
@@ -586,14 +751,14 @@ on the device — run after a fresh `expo start -c`):
 ## 🔢 Stats snapshot
 
 ```
-JS / TS files:    ~135 (mobile + admin + packages)
-Python files:    ~110 (apps + migrations + config)
-Django models:    30 (no new models in Session 7 — apps.consumer is view-layer only)
-Migrations:       24
-Tests passing:   102 (Python, +4 PostGIS-skipped under SQLite shim), 27 (JS — mobile)
-Coverage (API):   91%
+JS / TS files:    ~160 (mobile + admin + packages)
+Python files:    ~130 (apps + migrations + config)
+Django models:    32 (BonusCredit + WebhookEventLog added Session 8)
+Migrations:       26 (orders 0003 + payments 0003 added Session 8)
+Tests passing:   162 (Python, +4 PostGIS-skipped under SQLite shim), 41 (JS — mobile)
+Coverage (API):   90%
 CI duration:     ~3 min (JS job) + ~2 min (Django job)
-Dependencies:    ~1565 npm packages, ~130 Python packages (with dev extras)
+Dependencies:    ~1570 npm packages, ~130 Python packages (with dev extras)
 ```
 
 ---

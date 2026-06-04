@@ -3,3 +3,5 @@ export * as authApi from './auth';
 export * as usersApi from './users';
 export * as bagsApi from './bags';
 export * as favoritesApi from './favorites';
+export * as ordersApi from './orders';
+export * as paymentsApi from './payments';

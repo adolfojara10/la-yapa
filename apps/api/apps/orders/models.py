@@ -24,9 +24,20 @@ class OrderStatus(models.TextChoices):
     PAID = "paid", "Paid"
     READY_FOR_PICKUP = "ready_for_pickup", "Ready for pickup"
     COMPLETED = "completed", "Completed"
+    PENDING_REFUND = "pending_refund", "Pending refund"
     CANCELLED = "cancelled", "Cancelled"
     REFUNDED = "refunded", "Refunded"
     EXPIRED = "expired", "Expired"
+
+
+TERMINAL_STATUSES = frozenset(
+    {
+        "completed",
+        "cancelled",
+        "refunded",
+        "expired",
+    }
+)
 
 
 class CancelledBy(models.TextChoices):
@@ -80,6 +91,21 @@ class Order(UUIDPrimaryKeyModel, TimestampedModel):
     payment_method = models.CharField(max_length=20, choices=PaymentMethod.choices, blank=True)
     payment_provider_ref = models.CharField(max_length=128, blank=True)
 
+    # Set when a refund call to the provider failed after we already flipped
+    # status=pending_refund. Surfaces to ops alerting; the consumer-facing
+    # status stays pending_refund until ops resolves manually.
+    refund_failed_at = models.DateTimeField(null=True, blank=True)
+
+    # Transient flag (not persisted in form): when True at create_order time,
+    # a SuspendedMealDonation is generated alongside the order's payment success.
+    # Persisted so the webhook handler can read it without a second round-trip.
+    donate_as_suspended_meal = models.BooleanField(default=False)
+
+    # Bonus credit applied at order creation time, snapshot for accounting.
+    applied_credit_amount = models.DecimalField(
+        max_digits=8, decimal_places=2, default=Decimal("0")
+    )
+
     class Meta:
         ordering = ["-created_at"]
         indexes = [
@@ -90,6 +116,27 @@ class Order(UUIDPrimaryKeyModel, TimestampedModel):
 
     def __str__(self) -> str:
         return f"Order<{self.id} · {self.status}>"
+
+    # ----- domain helpers -----
+
+    # Consumer-side cancellation cutoff: 1 hour BEFORE pickup_window_start
+    # (matches Too Good To Go's policy; documented in PROGRESS.md Session 8).
+    CONSUMER_CANCEL_LEAD_TIME_SECONDS = 60 * 60
+
+    def is_within_consumer_cancel_window(self, *, now=None) -> bool:
+        from datetime import timedelta
+
+        from django.utils import timezone as _tz
+
+        now = now or _tz.now()
+        cutoff = self.bag.pickup_window_start - timedelta(
+            seconds=self.CONSUMER_CANCEL_LEAD_TIME_SECONDS
+        )
+        return now <= cutoff
+
+    @property
+    def is_terminal(self) -> bool:
+        return self.status in TERMINAL_STATUSES
 
 
 class DisputeOpenedBy(models.TextChoices):
