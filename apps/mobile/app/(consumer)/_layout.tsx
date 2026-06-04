@@ -12,7 +12,8 @@ export default function ConsumerLayout() {
         contentStyle: { backgroundColor: theme.colors.background },
       }}
     >
-      <Stack.Screen name="index" options={{ title: 'Inicio' }} />
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="bag/[id]" options={{ title: '', headerTransparent: true }} />
     </Stack>
   );
 }

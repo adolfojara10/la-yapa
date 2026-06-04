@@ -10,20 +10,20 @@ future work. Update at the end of every session.
 
 ## 🔭 Current state (at a glance)
 
-| Layer                                 | Status               | Notes                                                                                                                                 |
-| ------------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Monorepo (pnpm + Turborepo)           | ✅ Working           | `pnpm install` clean, lockfile committed                                                                                              |
-| CI (GitHub Actions)                   | ✅ Green             | JS job + Django job (PostGIS + Redis service containers)                                                                              |
-| Pre-commit hooks                      | ✅ Working           | Husky → Prettier on JS/MD; Python via separate `pre-commit`                                                                           |
-| Design system (`@layapa/ui`)          | ✅ v1                | Tokens single-source, light/dark, type scale, motion                                                                                  |
-| Mobile (Expo SDK 54)                  | ✅ Scaffold          | Theme + 11 components + `/design-system` + Yapi/Logo SVGs · Android dev client building on Linux (JDK 17 + ninja + Metro React-dedup) |
-| Admin (Next.js 14)                    | ✅ Scaffold          | Tailwind + next-themes + 8 shadcn-style primitives + showcase page                                                                    |
-| Django API (`apps/api`)               | ✅ Auth + data layer | 30 models · 24 migrations · 69 tests · 94% coverage · seed command                                                                    |
-| DRF endpoints                         | ✅ Auth complete     | 11 auth endpoints + `/users/me` GET/PATCH live; domain endpoints next                                                                 |
-| Auth (JWT + social)                   | ✅ End-to-end        | Email/password + OTP verification + Google + Apple + password reset + 15min access / 7d refresh w/ rotation + blacklist               |
-| Mobile features (auth, browse, order) | ⏳ Auth done         | 7 screens + routing guard + secure-storage + axios refresh; browse next                                                               |
-| Admin features (approvals, payouts)   | ⏳ Not started       |                                                                                                                                       |
-| Real Yapi artwork                     | ⏳ Placeholder SVGs  | Awaiting illustrator commission                                                                                                       |
+| Layer                                 | Status                    | Notes                                                                                                                                 |
+| ------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Monorepo (pnpm + Turborepo)           | ✅ Working                | `pnpm install` clean, lockfile committed                                                                                              |
+| CI (GitHub Actions)                   | ✅ Green                  | JS job + Django job (PostGIS + Redis service containers)                                                                              |
+| Pre-commit hooks                      | ✅ Working                | Husky → Prettier on JS/MD; Python via separate `pre-commit`                                                                           |
+| Design system (`@layapa/ui`)          | ✅ v1                     | Tokens single-source, light/dark, type scale, motion                                                                                  |
+| Mobile (Expo SDK 54)                  | ✅ Scaffold               | Theme + 11 components + `/design-system` + Yapi/Logo SVGs · Android dev client building on Linux (JDK 17 + ninja + Metro React-dedup) |
+| Admin (Next.js 14)                    | ✅ Scaffold               | Tailwind + next-themes + 8 shadcn-style primitives + showcase page                                                                    |
+| Django API (`apps/api`)               | ✅ Auth + data + consumer | 30 models · 24 migrations · 102 tests · 91% coverage · enriched seed command                                                          |
+| DRF endpoints                         | ✅ Auth + consumer browse | 11 auth endpoints + `/users/me` + 4 consumer endpoints (bags list/detail, reviews, favorites toggle)                                  |
+| Auth (JWT + social)                   | ✅ End-to-end             | Email/password + OTP verification + Google + Apple + password reset + 15min access / 7d refresh w/ rotation + blacklist               |
+| Mobile features (auth, browse, order) | ✅ Browse done            | List/map toggle, infinite scroll, 6-axis filters, Mapbox markers + bottom sheet, bag detail w/ sticky CTA stub; order next            |
+| Admin features (approvals, payouts)   | ⏳ Not started            |                                                                                                                                       |
+| Real Yapi artwork                     | ⏳ Placeholder SVGs       | Awaiting illustrator commission                                                                                                       |
 
 ---
 
@@ -398,22 +398,155 @@ on the device — run after a fresh `expo start -c`):
 
 ---
 
+### Session 7 — Consumer bag browsing end-to-end
+
+**Built**
+
+- **Backend (`apps.consumer` — new app, no models, view-layer only):**
+  - 4 endpoints under `/api/v1/consumer/`:
+    `GET /bags` (filtered + cursor-paginated list),
+    `GET /bags/{uuid}` (detail with image gallery, hours, latest 3 reviews,
+    accessible even for inactive bags so deep-links work),
+    `GET /bags/{uuid}/reviews` (paginated reviews on the bag's location),
+    `POST /business-locations/{id}/favorite` (idempotent toggle).
+  - Filter surface: `dietary` (AND semantics), `exclude_allergens` (union
+    exclusion), `min_price`/`max_price`, `pickup_window` (today/tomorrow/
+    this_week), `min_rating`, `q` (title + business name `icontains`),
+    `sort` (distance/price/rating/ending_soon), `radius_km`, `lat`/`lng`.
+    When `lat`/`lng` missing and no `ConsumerProfile.default_location`,
+    sort=distance silently degrades to ending_soon — never returns 400.
+  - `BagCursorPagination` (subclass of DRF `CursorPagination`) with
+    per-request `ordering` set by the view: `(distance_m, id)` for geo,
+    `(pickup_window_end, id)` for ending_soon, `(-rating, id)` for rating.
+    Stable under bag activate/expire because `id` (UUID) breaks ties.
+  - `geo.py` isolates GeoDjango imports inside functions so the test SQLite
+    shim (which excludes `django.contrib.gis`) keeps loading cleanly.
+    `annotate_distance` / `filter_within_radius` no-op under the shim;
+    `resolve_caller_location` picks request params → profile default → None.
+  - `images.thumb(url, width=N)` rewrites Cloudflare-hosted URLs to the
+    `/cdn-cgi/image/width=N,quality=70,format=auto/` transform path; passes
+    through Unsplash and unknown hosts unchanged. Pure function — 5 tests.
+  - `BagListSerializer` (lean card) + `BagDetailSerializer` (extends list
+    with description, gallery, hours, latest reviews). Both expose
+    annotated `distance_m`, `is_favorited`, `rating_average`,
+    `rating_count` from view-supplied annotations.
+  - Authorization: `[IsAuthenticated, ConsumerOnly, IsEmailVerified]` —
+    composes the role permissions added in Session 6. Business owners +
+    unverified consumers get 403 (tested both).
+  - Seed enriched: pickup windows spread across today/tomorrow/this week,
+    dietary/allergen tags sprinkled, Unsplash food images, 10 reviews
+    across business locations so `min_rating` filter has data.
+  - **33 new tests + 4 PostGIS-only (skipped under SQLite shim, run in
+    CI's PostGIS job).** Total backend tests now 102 at 91% coverage.
+
+- **Mobile (`apps/mobile`):**
+  - `(consumer)/` rebuilt as a Stack containing `(tabs)` (Browse, Favoritos,
+    Perfil) + a top-level `bag/[id]` route. Logout button moved from the
+    old `(consumer)/index` to the new Perfil tab.
+  - Browse screen with sticky header (search input, filter button w/ active
+    count badge, list/map toggle), `BagListView` (TanStack
+    `useInfiniteQuery`, pull-to-refresh, empty state, footer spinner),
+    `BagMapView` (`@rnmapbox/maps`, user location pin, count-badge markers,
+    client-side cluster by `location_id`), `BagBottomSheet` (40%/85% snap,
+    opens on marker tap).
+  - `FiltersSheet` exposes all 6 filter axes + sort as chip rows bound to
+    the Zustand filter store. "Limpiar" / "Aplicar" affordances. Filter
+    changes invalidate the queryKey automatically.
+  - `BagCard` with image (expo-image + blurhash placeholder), discount
+    badge, heart toggle with optimistic update + server rollback on
+    failure, price/strikethrough/distance/rating/pickup-window.
+  - `bag/[id]` detail screen with horizontal image carousel, rating +
+    distance + pickup countdown header, "Lo que puedes recibir" surprise-
+    bag callout, dietary chips, allergen warnings (tinted red), quantity
+    selector (only when `quantity_available > 1`), latest 3 reviews inline,
+    sticky "Reservar por $X.XX" CTA that shows a "checkout next session"
+    toast.
+  - `useUserLocation` requests permission, falls back to
+    `consumer_profile.default_location`, never blocks the screen on a
+    denial (degraded mode shown in the list / map fallback centroid).
+  - `useGeocode` debounces Mapbox Geocoding calls with `country=ec` bias;
+    returns `[]` gracefully when the access token is empty.
+  - **8 new Jest tests** (filter store transitions, query-param serializer,
+    BagCard render). Mobile suite now 27 tests across 7 files.
+  - New deps: `@rnmapbox/maps ~10.3`, `expo-image ~3.0`, `expo-location ~19.0`
+    (auto-installed via `expo install`), `@react-navigation/bottom-tabs`.
+
+- **Shared types:** `bag.ts` rewritten snake_case (mirrors DRF directly,
+  no client-side renaming), new `consumer.ts` with `BagListParams`,
+  `CursorPage<T>`, `FavoriteToggleResponse`, `PickupWindow`, `BagSort`.
+
+- **Docs:** `AGENTS.md` §4 gained "Provisioning Mapbox" (public + download
+  token setup); §5 documents the `@rnmapbox/maps` rebuild-on-install drill.
+
+**Decisions**
+
+- **AND semantics for `dietary`** filter (vegan ∧ gluten-free, not ∨).
+  Safety-first: a vegan ∧ gluten-free user picking both chips wants results
+  that satisfy both constraints; OR would surface bags that violate one
+  of their dietary needs. Allergen exclusion stays union semantics for
+  the same reason.
+- **Custom `BagCursorPagination` over stock DRF `CursorPagination`**.
+  We need different orderings per request (`distance_m` for geo,
+  `pickup_window_end` for ending_soon, etc.). The view assigns
+  `paginator.ordering` per-request from the actual queryset's `order_by`.
+- **`apps.consumer` as a thin presentation app** rather than scattering
+  view code into `apps.bags` + `apps.businesses` + `apps.reviews`. Mirrors
+  what `apps.users.auth` does for the auth surface. Zero models in the new
+  app, no new migrations.
+- **PostGIS geo tests skipped under SQLite** — `@pytest.mark.skipif`
+  marker keeps local pytest fast and contributors free of GDAL/SpatiaLite.
+  CI runs the geo tests against the real PostGIS container.
+- **Mapbox tokens left blank in `.env.example`**, documented in `AGENTS.md`
+  §4. Same posture as Google OAuth client IDs.
+- **Sticky reserve CTA stubbed** — wired visually, tap shows a toast.
+  Real reservation flow ships in Session 8 (orders + payments).
+- **Filter state in Zustand, not URL/router params.** Mobile users don't
+  share URLs, and the list↔map toggle would otherwise re-mount with each
+  switch. The store's reactive subscription invalidates the React Query
+  queryKey automatically on any filter change.
+
+**Caveats / known gaps**
+
+- **Map tiles render as an empty grid** until both Mapbox tokens are
+  provisioned. List view + all filters remain fully functional in that
+  degraded state. This is expected Mapbox behavior, not a crash.
+- **Min-rating filter uses a subquery** annotation over
+  `business_location__reviews`. Fine at MVP scale; if profiling shows the
+  rating subquery is hot at >10k bags, consider denormalizing
+  `BusinessLocation.rating_average` + `.rating_count` columns updated on
+  review save (Phase 2 candidate).
+- **Favorites tab is a stub** — heart on cards persists server-side, but
+  the dedicated "Favoritos" tab just shows a placeholder. Listing
+  favorited businesses is Session 8.
+- **Profile tab is a stub** — only the logout button moved here from the
+  old `(consumer)/index`. Edit-profile, settings, notifications,
+  referrals are Session 8+.
+- **Custom Andean Mapbox style not built** — using Mapbox's stock "Light"
+  style. Custom style commission deferred alongside Yapi mascot artwork.
+- **Search bar uses Mapbox Geocoding directly from the device.** No
+  backend proxy + rate-limit yet; defer until we have abuse signals.
+- **CI workflow not updated.** `apps.consumer` tests run with the rest
+  of the suite; no new CI step needed.
+
+---
+
 ## 🎯 Next-up priorities
 
 ### Phase 1 — Consumer Core MVP (Weeks 3-6 of the master roadmap)
 
-1. **Orders service layer** — `Order.complete()`, `Order.cancel()`,
-   refund flow, state-machine validation. Replaces today's "save with
-   status=COMPLETED" pattern and gives the impact signal a stable invocation
-   point.
-2. **DRF viewsets + serializers**:
-   - `GET /api/v1/bags/nearby/?lat&lng&radius_km` (PostGIS `dwithin`)
-   - `GET/POST /api/v1/orders/`, `POST /orders/{id}/cancel/`, `POST /orders/{id}/checkout/`
-   - `GET /api/v1/businesses/{id}/`
-   - `POST /api/v1/businesses/{id}/favorite/`
-3. **Mapbox geocoding** in `BusinessLocation.save()` hook.
-4. **Mobile bag discovery** — map screen, list screen, bag detail, reservation,
-   pickup code screen.
+1. **Orders service layer + checkout** — `Order.create()`,
+   `Order.complete()`, `Order.cancel()`, state-machine validation. Wires
+   up the sticky CTA stubbed in Session 7. Payments integration (PayPhone,
+   DeUna) lands alongside.
+2. **Pickup flow** — QR/PIN screens on both consumer and business mobile;
+   `POST /orders/{id}/confirm-pickup` viewset.
+3. **Favorites list UI** — turn the placeholder Favoritos tab into a
+   real list of favorited businesses with their active bags.
+4. **Profile tab fleshed out** — edit profile, language toggle, dietary
+   preferences edit (re-uses onboarding components), referral code share.
+5. **Mapbox geocoding proxy** on the backend with caching, so the mobile
+   geocoder isn't hitting Mapbox direct and we get one place to add
+   per-user rate limiting.
 
 ### Phase 2 — Business core (Weeks 7-9)
 
@@ -453,14 +586,14 @@ on the device — run after a fresh `expo start -c`):
 ## 🔢 Stats snapshot
 
 ```
-JS / TS files:    ~100 (mobile + admin + packages)
-Python files:     ~95 (apps + migrations + config)
-Django models:    30
+JS / TS files:    ~135 (mobile + admin + packages)
+Python files:    ~110 (apps + migrations + config)
+Django models:    30 (no new models in Session 7 — apps.consumer is view-layer only)
 Migrations:       24
-Tests passing:    69 (Python), 15 (JS — mobile auth)
-Coverage (API):   94%
-CI duration:      ~3 min (JS job) + ~2 min (Django job)
-Dependencies:     ~1530 npm packages, ~130 Python packages (with dev extras)
+Tests passing:   102 (Python, +4 PostGIS-skipped under SQLite shim), 27 (JS — mobile)
+Coverage (API):   91%
+CI duration:     ~3 min (JS job) + ~2 min (Django job)
+Dependencies:    ~1565 npm packages, ~130 Python packages (with dev extras)
 ```
 
 ---

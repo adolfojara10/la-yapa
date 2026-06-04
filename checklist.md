@@ -95,19 +95,25 @@ Before starting the next session, ALWAYS verify:
 - [ ] Cold-launch with invalid tokens in SecureStore → falls back to welcome
 - [x] `pytest apps/api/apps/users/` passes (69 tests, 94% coverage)
 
-#### 📦 Browse Tests
+#### 📦 Browse Tests _(Session 7 — backend + mobile complete)_
 
-- 🔒 (pending: `GET /api/v1/bags/nearby/`) Home screen loads with bags from seed data
-- 🔒 (pending: bag list screen) List view shows bag cards correctly (image, price, distance)
-- 🔒 (pending: Mapbox integration) Map view loads with Mapbox tiles
-- 🔒 (pending: location permission flow) User location permission requested → works
-- 🔒 (pending: PostGIS `dwithin` query) Markers appear on map within 3km
-- 🔒 (pending: bottom-sheet bag list) Tap marker → bottom sheet opens with bag list
-- 🔒 (pending: filter UI) Filters work: dietary, allergens, price, distance
-- 🔒 (pending: list refresh hook) Pull to refresh works
-- 🔒 (pending: pagination in viewset) Infinite scroll loads more bags
-- 🔒 (pending: bag detail screen) Bag detail screen shows all info
-- 🔒 (pending: empty-state screen) Empty state shows Yapi sleepy illustration when no bags
+- [ ] Home screen (Explorar tab) loads with bags from `seed_demo_data`
+- [ ] List view shows bag cards correctly (image, business, price, strikethrough, discount %, distance, rating, pickup window)
+- [ ] Heart button toggles favorite, persists across reload (server-backed)
+- [ ] Tap a card → bag detail opens with carousel + description + chips
+- [ ] Pull to refresh works (list view)
+- [ ] Infinite scroll loads the next page when scrolling near the bottom
+- [ ] Filters sheet opens: pick "Vegano" + "Sin gluten" → list shrinks (AND semantics)
+- [ ] "Evitar alérgenos: gluten" removes bags with gluten warning
+- [ ] Distance picker (1/3/5/10 km) refreshes the list
+- [ ] Filter count badge on the filter button reflects active count
+- [ ] Search bar `q` filters bags by title/business name as you type
+- [ ] Sticky "Reservar por $X.XX" CTA on detail shows the "checkout next session" toast
+- [ ] Empty state ("No hay bolsas con esos filtros") shows when filters return zero
+- 🔒 (pending: Mapbox `pk.*` + `sk.*` tokens) Map view shows real Mapbox tiles
+- 🔒 (pending: Mapbox tokens) Markers cluster by location with a count badge
+- 🔒 (pending: Mapbox tokens) Tap marker → bottom sheet opens with that location's bags
+- 🔒 (pending: real Yapi artwork) Empty state shows Yapi sleepy illustration
 
 #### 💳 Checkout Tests (Use PayPhone/DeUna sandbox/test mode)
 

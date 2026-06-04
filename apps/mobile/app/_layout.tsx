@@ -75,7 +75,7 @@ function AuthGuard() {
     }
 
     if (user.role === 'consumer') {
-      if (!inConsumerGroup) router.replace('/(consumer)');
+      if (!inConsumerGroup) router.replace('/(consumer)/(tabs)');
       return;
     }
     if (user.role === 'business_owner') {

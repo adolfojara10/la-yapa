@@ -172,16 +172,79 @@ class Command(BaseCommand):
 
     def _seed_bags(self, businesses: list[Business]) -> None:
         self.stdout.write("Seeding bags...")
-        for biz in businesses:
+        # Unsplash food images (`?w=800` returns a reasonable thumb).
+        images = [
+            "https://images.unsplash.com/photo-1517433670267-08bbd4be890f?w=800",  # pan
+            "https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=800",  # almuerzo
+            "https://images.unsplash.com/photo-1542838132-92c53300491e?w=800",  # frutas
+            "https://images.unsplash.com/photo-1502741338009-cac2772e18bc?w=800",  # pastel
+            "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800",  # bowl
+            "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800",  # pizza
+        ]
+        dietary_pool = list(DietaryTag.objects.all())
+        allergen_pool = list(AllergenTag.objects.all())
+
+        # 6 pickup-window buckets so consumer filters (today/tomorrow/this_week)
+        # have non-empty results in dev.
+        window_offsets_hours = [2, 5, 24, 30, 48, 96]
+        prices = [
+            (Decimal("12.00"), Decimal("4.50")),
+            (Decimal("10.00"), Decimal("3.00")),
+            (Decimal("18.00"), Decimal("6.50")),
+            (Decimal("8.00"), Decimal("2.50")),
+        ]
+
+        bag_index = 0
+        for biz_index, biz in enumerate(businesses):
             loc = biz.locations.first()
             for i in range(4):
-                start = timezone.now() + timedelta(hours=2 + i)
-                BagFactory(
+                start = timezone.now() + timedelta(
+                    hours=window_offsets_hours[(bag_index) % len(window_offsets_hours)]
+                )
+                original, sale = prices[i % len(prices)]
+                bag = BagFactory(
                     business_location=loc,
                     title=f"Bolsa Sorpresa {biz.name} #{i + 1}",
-                    original_price=Decimal("12.00"),
-                    sale_price=Decimal("4.50"),
+                    description=(
+                        "Una selección rotatoria de productos del día — siempre frescos, "
+                        "siempre con cariño."
+                    ),
+                    image_url=images[bag_index % len(images)],
+                    original_price=original,
+                    sale_price=sale,
                     quantity_available=5,
                     pickup_window_start=start,
                     pickup_window_end=start + timedelta(hours=2),
                 )
+                # Sprinkle dietary + allergen tags so filters return results.
+                if dietary_pool:
+                    bag.dietary_tags.add(dietary_pool[(biz_index + i) % len(dietary_pool)])
+                if allergen_pool and (i % 2 == 0):
+                    bag.allergen_warnings.add(allergen_pool[i % len(allergen_pool)])
+                bag_index += 1
+
+        self._seed_reviews(businesses)
+
+    def _seed_reviews(self, businesses: list[Business]) -> None:
+        """Add 2 reviews per business location so min_rating filter has data."""
+        from apps.orders.factories import OrderFactory
+        from apps.reviews.factories import ReviewFactory
+
+        self.stdout.write("Seeding reviews...")
+        ratings_cycle = [5, 4, 5, 3, 4, 5]
+        idx = 0
+        for biz in businesses:
+            loc = biz.locations.first()
+            for _ in range(2):
+                # ReviewFactory creates an Order via SubFactory; we let it
+                # build a fresh consumer + bag rather than reusing seed personas
+                # (keeps the seed idempotent enough for re-runs).
+                order = OrderFactory(business_location=loc)
+                ReviewFactory(
+                    order=order,
+                    consumer=order.consumer,
+                    business_location=loc,
+                    rating=ratings_cycle[idx % len(ratings_cycle)],
+                    comment="Excelente experiencia, repetiré!" if idx % 2 == 0 else "",
+                )
+                idx += 1

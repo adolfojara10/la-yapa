@@ -29,7 +29,20 @@
       "expo-splash-screen",
       "expo-asset",
       "expo-secure-store",
-      "expo-apple-authentication"
+      "expo-apple-authentication",
+      [
+        "@rnmapbox/maps",
+        {
+          "RNMapboxMapsDownloadToken": ""
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Usamos tu ubicación para mostrarte bolsas cerca de ti.",
+          "locationWhenInUsePermission": "Usamos tu ubicación para mostrarte bolsas cerca de ti."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": false

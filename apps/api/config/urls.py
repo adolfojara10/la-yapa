@@ -16,6 +16,7 @@ api_v1_patterns = [
     path("health/", health_check, name="health-check"),
     path("auth/", include("apps.users.auth.urls", namespace="auth")),
     path("users/", include("apps.users.api.urls", namespace="users")),
+    path("consumer/", include("apps.consumer.urls", namespace="consumer")),
 ]
 
 urlpatterns = [

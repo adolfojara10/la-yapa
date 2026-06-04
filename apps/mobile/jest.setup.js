@@ -34,5 +34,49 @@ jest.mock('expo-apple-authentication', () => ({
 }));
 jest.mock('expo-location', () => ({
   requestForegroundPermissionsAsync: jest.fn(),
+  getForegroundPermissionsAsync: jest.fn(async () => ({ status: 'undetermined' })),
   getCurrentPositionAsync: jest.fn(),
+  Accuracy: { Balanced: 3 },
 }));
+
+// expo-image: render as a plain View so render-tree tests don't blow up.
+jest.mock('expo-image', () => {
+  const { View } = require('react-native');
+  return { Image: View };
+});
+
+// @rnmapbox/maps: pure inert mock — tests don't render the map screen.
+jest.mock('@rnmapbox/maps', () => {
+  const { View } = require('react-native');
+  const passthrough = ({ children }) => children ?? null;
+  return {
+    __esModule: true,
+    default: {
+      setAccessToken: jest.fn(),
+      StyleURL: { Light: 'mapbox://styles/mapbox/light-v11' },
+      MapView: View,
+      Camera: passthrough,
+      UserLocation: passthrough,
+      PointAnnotation: passthrough,
+    },
+    setAccessToken: jest.fn(),
+    StyleURL: { Light: 'mapbox://styles/mapbox/light-v11' },
+    MapView: View,
+    Camera: passthrough,
+    UserLocation: passthrough,
+    PointAnnotation: passthrough,
+  };
+});
+
+// @gorhom/bottom-sheet: simple passthrough so screens that mount it don't crash.
+jest.mock('@gorhom/bottom-sheet', () => {
+  const { View, FlatList, ScrollView } = require('react-native');
+  return {
+    __esModule: true,
+    default: View,
+    BottomSheetFlatList: FlatList,
+    BottomSheetScrollView: ScrollView,
+    BottomSheetView: View,
+    BottomSheetTextInput: View,
+  };
+});

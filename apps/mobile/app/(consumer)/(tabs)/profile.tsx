@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Text } from '@/components/ui/Text';
 import { useTheme } from '@/theme';
 
-export default function ConsumerHome() {
+export default function ProfileScreen() {
   const { theme } = useTheme();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
@@ -14,14 +14,18 @@ export default function ConsumerHome() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.background }]}>
       <View style={styles.body}>
-        <Text variant="h1" style={{ color: theme.colors.primary }}>
-          ¡Hola, {user?.consumer_profile?.first_name ?? 'amigo'}!
+        <Text variant="h2" style={{ color: theme.colors.text }}>
+          {user?.consumer_profile?.first_name ?? 'Mi perfil'}
         </Text>
-        <Text variant="body" style={{ color: theme.colors.textMuted, marginTop: 8 }}>
-          La pantalla de descubrimiento de bolsas llega en la próxima sesión.
+        <Text variant="body" style={{ color: theme.colors.textMuted, marginTop: 4 }}>
+          {user?.email}
         </Text>
-        <View style={{ marginTop: 24 }}>
-          <Button variant="ghost" onPress={logout}>
+        <Text variant="small" style={{ color: theme.colors.textMuted, marginTop: 24 }}>
+          La edición de perfil completa, configuración de notificaciones y referidos llegan en una
+          próxima sesión.
+        </Text>
+        <View style={{ marginTop: 32 }}>
+          <Button variant="ghost" onPress={logout} fullWidth>
             Cerrar sesión
           </Button>
         </View>
