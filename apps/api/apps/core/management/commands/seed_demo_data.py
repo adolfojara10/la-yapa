@@ -45,6 +45,46 @@ class Command(BaseCommand):
     def handle(self, *args, **opts):
         if opts["reset"]:
             self.stdout.write(self.style.WARNING("Wiping demo data..."))
+            # Delete in FK order to avoid ProtectedError. Anything that
+            # references Bag/Business/Order with on_delete=PROTECT must
+            # be deleted first.
+            from apps.businesses.models import Favorite
+            from apps.orders.models import Dispute, Order
+            from apps.payments.models import (
+                BonusCredit,
+                Invoice,
+                PaymentTransaction,
+                Payout,
+                PayoutLineItem,
+                WebhookEventLog,
+            )
+            from apps.reviews.models import Review
+            from apps.suspended_meals.models import (
+                SuspendedMealClaim,
+                SuspendedMealDonation,
+            )
+
+            # Payment side first — they reference Order.
+            PayoutLineItem.objects.all().delete()
+            Payout.objects.all().delete()
+            Invoice.objects.all().delete()
+            BonusCredit.objects.all().delete()
+            PaymentTransaction.objects.all().delete()
+            WebhookEventLog.objects.all().delete()
+
+            # Donations + claims reference Order/Bag/Location.
+            SuspendedMealClaim.objects.all().delete()
+            SuspendedMealDonation.objects.all().delete()
+
+            # Reviews + disputes reference Order.
+            Review.objects.all().delete()
+            Dispute.objects.all().delete()
+
+            # Now Order can be deleted (frees up Bag for delete).
+            Order.objects.all().delete()
+            Favorite.objects.all().delete()
+
+            # Domain entities.
             Bag.objects.all().delete()
             Business.objects.all().delete()
             User.objects.filter(email__endswith="@layapa.test").delete()
