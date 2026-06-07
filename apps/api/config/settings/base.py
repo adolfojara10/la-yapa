@@ -69,6 +69,7 @@ LOCAL_APPS = [
     "apps.sales",
     "apps.ads",
     "apps.consumer",
+    "apps.business",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -137,6 +138,11 @@ CELERY_BROKER_URL = env("CELERY_BROKER_URL", default=REDIS_URL)
 CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default=REDIS_URL)
 CELERY_TIMEZONE = "America/Guayaquil"
 CELERY_TASK_TRACK_STARTED = True
+# Auto-discover tasks under apps.*.tasks (also covered by autodiscover_tasks()).
+CELERY_IMPORTS = (
+    "apps.orders.tasks",
+    "apps.payments.tasks",
+)
 
 # ---------- Auth ----------
 AUTH_USER_MODEL = "users.User"

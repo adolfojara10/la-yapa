@@ -64,6 +64,24 @@ class Command(BaseCommand):
                 f"{Bag.objects.count()} bags, {len(consumers)} consumers."
             )
         )
+        self.stdout.write("")
+        self.stdout.write(
+            self.style.MIGRATE_HEADING("Test credentials (password for all: test-pass-123):")
+        )
+        self.stdout.write("  Business owner:   owner@layapa.test")
+        self.stdout.write("  Consumer #1:      sofia@layapa.test")
+        self.stdout.write("  Consumer #2:      camila@layapa.test")
+        self.stdout.write("  Consumer #3:      matias@layapa.test")
+        self.stdout.write("  PAID-order #1:    mateo@layapa.test  (active order ready for pickup)")
+        self.stdout.write("  PAID-order #2:    nora@layapa.test   (active order ready for pickup)")
+        self.stdout.write("  Donor:            donor@layapa.test  (made a suspended-meal donation)")
+        self.stdout.write("")
+        self.stdout.write(
+            self.style.MIGRATE_HEADING(
+                "Try the pickup flow: log in as owner@layapa.test and you'll see 2 PAID "
+                "orders ready to confirm + 1 active suspended-meal donation."
+            )
+        )
 
     # ----------------------------------------------------------------------
 
@@ -155,16 +173,31 @@ class Command(BaseCommand):
 
     def _seed_businesses(self) -> list[Business]:
         self.stdout.write("Seeding businesses...")
+        from apps.users.factories import BusinessOwnerFactory
+
+        # The FIRST business gets a known, email-verified owner that can be
+        # used for manual testing of the business app. Email: owner@layapa.test,
+        # password: test-pass-123 (UserFactory default — see apps/users/factories.py).
+        # The owner is referenced in `checklist.md` Session 9 manual smoke recipe.
+        known_owner = BusinessOwnerFactory(
+            email="owner@layapa.test",
+            username="owner",
+            is_email_verified=True,
+        )
+
         names = [
-            ("Panadería La Esperanza", BusinessType.BAKERY),
-            ("Restaurante El Mirador", BusinessType.RESTAURANT),
-            ("Supermercado Andino", BusinessType.SUPERMARKET),
-            ("Hotel Cuenca Real", BusinessType.HOTEL),
-            ("Mercado 10 de Agosto · Puesto 42", BusinessType.MERCADO),
+            ("Panadería La Esperanza", BusinessType.BAKERY, known_owner),
+            ("Restaurante El Mirador", BusinessType.RESTAURANT, None),
+            ("Supermercado Andino", BusinessType.SUPERMARKET, None),
+            ("Hotel Cuenca Real", BusinessType.HOTEL, None),
+            ("Mercado 10 de Agosto · Puesto 42", BusinessType.MERCADO, None),
         ]
         businesses = []
-        for name, btype in names:
-            biz = BusinessFactory(name=name, business_type=btype)
+        for name, btype, owner in names:
+            kwargs = {"name": name, "business_type": btype}
+            if owner is not None:
+                kwargs["owner"] = owner
+            biz = BusinessFactory(**kwargs)
             BusinessLocationFactory(business=biz, name="Sucursal Principal")
             BusinessVerificationFactory(business=biz)
             businesses.append(biz)
@@ -224,6 +257,7 @@ class Command(BaseCommand):
                 bag_index += 1
 
         self._seed_reviews(businesses)
+        self._seed_business_app_data(businesses)
 
     def _seed_reviews(self, businesses: list[Business]) -> None:
         """Add 2 reviews per business location so min_rating filter has data."""
@@ -248,3 +282,81 @@ class Command(BaseCommand):
                     comment="Excelente experiencia, repetiré!" if idx % 2 == 0 else "",
                 )
                 idx += 1
+
+    def _seed_business_app_data(self, businesses: list[Business]) -> None:
+        """Session 9 additions: a couple PAID orders ready for pickup +
+        one ACTIVE suspended-meal donation, so the business dashboard +
+        suspended tab have content when a vendor logs in."""
+        from datetime import timedelta as _td
+        from decimal import Decimal as _D
+
+        from apps.bags.factories import BagFactory
+        from apps.orders.models import OrderStatus
+        from apps.orders.services import create_order
+        from apps.suspended_meals.models import (
+            DonationStatus,
+            SuspendedMealDonation,
+        )
+        from apps.users.factories import (
+            ConsumerProfileFactory,
+            UserFactory,
+        )
+
+        self.stdout.write("Seeding business-app demo data (PAID orders + suspended meal)...")
+        now = timezone.now()
+
+        # Pick the first business as the "vendor under test" target. This
+        # business is owned by owner@layapa.test (seeded above) so logging
+        # in as that user shows these orders on the business dashboard.
+        target_biz = businesses[0]
+        target_loc = target_biz.locations.first()
+
+        # Two consumer personas for the PAID orders.
+        seeded_orders = []
+        for i, (email, first) in enumerate(
+            [("mateo@layapa.test", "Mateo"), ("nora@layapa.test", "Nora")]
+        ):
+            consumer = UserFactory(
+                email=email, username=email.split("@")[0], is_email_verified=True
+            )
+            ConsumerProfileFactory(user=consumer, first_name=first)
+
+            bag = BagFactory(
+                business_location=target_loc,
+                title=f"Demo PAID bag #{i + 1}",
+                original_price=_D("12.00"),
+                sale_price=_D("4.50"),
+                quantity_available=3,
+                pickup_window_start=now + _td(minutes=10),
+                pickup_window_end=now + _td(hours=2),
+            )
+            order = create_order(consumer=consumer, bag_id=bag.id, quantity=1)
+            order.status = OrderStatus.PAID
+            order.save(update_fields=["status"])
+            seeded_orders.append(order)
+
+        # One ACTIVE suspended-meal donation (general pool — dispatchable
+        # by any business owner).
+        donor = UserFactory(email="donor@layapa.test", username="donor", is_email_verified=True)
+        ConsumerProfileFactory(user=donor, first_name="Sofía")
+        SuspendedMealDonation.objects.create(
+            donor=donor,
+            amount=_D("3.00"),
+            bag=None,
+            status=DonationStatus.ACTIVE,
+            is_anonymous=True,
+        )
+
+        # Print pickup codes + QR tokens so the manual test recipe in
+        # checklist.md can drive the confirm-pickup endpoint with curl
+        # without going through Django admin to grab them.
+        self.stdout.write("")
+        self.stdout.write(
+            self.style.MIGRATE_HEADING("Seeded PAID orders (Session 9 pickup test data):")
+        )
+        for order in seeded_orders:
+            consumer_name = order.consumer.consumer_profile.first_name
+            self.stdout.write(
+                f"  {consumer_name:8} · PIN {order.pickup_code} · "
+                f"QR {order.pickup_qr_token} · order_id {order.id}"
+            )

@@ -60,6 +60,10 @@ export interface Order {
   bag: OrderBagSnapshot;
   business_location: OrderBusinessLocation;
   is_within_consumer_cancel_window: boolean;
+  // Pickup anti-fraud state (Session 9). Surfaces to consumer detail so
+  // we can render a "PIN bloqueado, muestra el QR" banner when relevant.
+  pin_locked?: boolean;
+  qr_consumed?: boolean;
 }
 
 export interface BonusCredit {

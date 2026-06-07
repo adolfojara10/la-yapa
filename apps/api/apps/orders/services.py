@@ -55,6 +55,35 @@ class CancellationOutsideWindow(OrderServiceError):
     code = "cancellation_outside_window"
 
 
+# ----- pickup-time errors -----
+
+
+class PickupError(OrderServiceError):
+    """Base for confirm_pickup_* failures."""
+
+    code = "pickup_error"
+
+
+class QrInvalid(PickupError):
+    code = "qr_invalid"
+
+
+class PinInvalid(PickupError):
+    code = "pin_invalid"
+
+
+class PinLocked(PickupError):
+    code = "pin_locked"
+
+
+class OutsidePickupWindow(PickupError):
+    code = "outside_pickup_window"
+
+
+class PickupInvalidStatus(PickupError):
+    code = "pickup_invalid_status"
+
+
 # ---- result types ----------------------------------------------------------
 
 
@@ -263,16 +292,18 @@ def cancel_order(
             type=PayoutLineItemType.BONUS_CREDIT_DEDUCTION,
         )
 
-    # Trigger refund AFTER the transaction is solid — refund_payment may make
-    # an HTTP call to the provider; we don't want to roll back our local
-    # status flip if the provider call hangs.
+    # Trigger refund AFTER the transaction is solid. Dispatched to Celery
+    # so a slow provider call doesn't block the HTTP request that cancelled
+    # the order. Under tests (CELERY_TASK_ALWAYS_EAGER=True) the task
+    # runs synchronously inline; in prod a worker picks it up.
     if triggered_refund:
         # Imported inline to avoid a circular dep at module load.
-        from apps.payments.services import refund_payment
+        from apps.payments.tasks import refund_payment_task
 
-        # Schedule the refund. `refund_payment` is responsible for moving
-        # to REFUNDED / CANCELLED once the provider confirms.
-        transaction.on_commit(lambda: refund_payment(order, reason=reason))
+        order_pk = str(order.pk)
+        transaction.on_commit(
+            lambda: refund_payment_task.apply_async(args=[order_pk], kwargs={"reason": reason})
+        )
 
     return CancelResult(
         order=order,
@@ -328,3 +359,229 @@ def expire_stale_pending(*, older_than_minutes: int = 15) -> int:
         updated_at=timezone.now(),
     )
     return len(stale)
+
+
+# ---------------------------------------------------------------------------
+# Pickup confirmation — business-side.
+#
+# Two entry points: confirm_pickup_by_qr (scanner path) and
+# confirm_pickup_by_pin (manual entry fallback). Both share the same
+# downstream invariants: order must belong to one of the requester's owned
+# business locations, status must be PAID, pickup window must be open
+# (within the configured grace band), QR must not be already consumed.
+#
+# On success: status → COMPLETED, picked_up_at set, qr_consumed_at set
+# AND pickup_qr_token rotated to a fresh UUID. The old token is no longer
+# in the DB — second scan of the original returns QrInvalid, indistinguishable
+# from a forged token.
+# ---------------------------------------------------------------------------
+
+
+def _owned_business_location_ids(business_owner) -> list[int]:
+    """All BusinessLocation IDs belonging to businesses owned by this user."""
+    from apps.businesses.models import BusinessLocation
+
+    return list(
+        BusinessLocation.objects.filter(business__owner=business_owner).values_list("id", flat=True)
+    )
+
+
+def _assert_confirm_preconditions(order: Order) -> None:
+    """Shared invariants for both QR and PIN paths."""
+    if order.status == OrderStatus.COMPLETED:
+        # Idempotent: re-confirming a completed order is a no-op (caller
+        # discovers this from the returned status). We don't raise here.
+        return
+    if order.status != OrderStatus.PAID:
+        raise PickupInvalidStatus(f"Order in {order.status}, only PAID orders can be confirmed.")
+    if not order.is_within_pickup_window():
+        raise OutsidePickupWindow(
+            "Pickup attempted outside the allowed window (60min early / 15min late grace)."
+        )
+
+
+@transaction.atomic
+def confirm_pickup_by_qr(*, business_owner, qr_token: str) -> Order:
+    """Look up the order by single-use qr_token, verify ownership + window,
+    flip to COMPLETED, rotate the token.
+
+    Single-use enforcement: after a successful confirm, pickup_qr_token is
+    replaced with a fresh UUID. A replay of the original token finds no
+    matching row and raises QrInvalid — same response as a forged token,
+    so a scanner-equipped attacker can't tell which case they're in.
+    """
+    if not qr_token:
+        raise QrInvalid()
+
+    owned_location_ids = _owned_business_location_ids(business_owner)
+    if not owned_location_ids:
+        # User owns no businesses; can't confirm anyone's pickup.
+        raise QrInvalid()
+
+    try:
+        order = (
+            Order.objects.select_for_update()
+            .select_related("bag", "consumer", "business_location__business")
+            .get(
+                pickup_qr_token=qr_token,
+                business_location_id__in=owned_location_ids,
+            )
+        )
+    except (Order.DoesNotExist, ValueError):
+        # ValueError catches malformed UUID inputs.
+        raise QrInvalid() from None
+
+    _assert_confirm_preconditions(order)
+    if order.status == OrderStatus.COMPLETED:
+        return order
+
+    # Flip status, mark consumed, rotate.
+    import uuid as _uuid
+
+    assert_can_transition(order.status, OrderStatus.COMPLETED)
+    order.status = OrderStatus.COMPLETED
+    order.picked_up_at = timezone.now()
+    order.qr_consumed_at = timezone.now()
+    order.pickup_qr_token = _uuid.uuid4()
+    order.save(
+        update_fields=[
+            "status",
+            "picked_up_at",
+            "qr_consumed_at",
+            "pickup_qr_token",
+            "updated_at",
+        ]
+    )
+    return order
+
+
+def confirm_pickup_by_pin(
+    *,
+    business_owner,
+    business_location_id: int,
+    pin: str,
+) -> Order:
+    """Look up the active order at `business_location_id` with this `pin`,
+    verify ownership + window, flip to COMPLETED.
+
+    PIN is only unique within a business location's active orders. Caller
+    must supply the location explicitly (the vendor knows which location
+    they're working at — it's the one they're logged in for).
+
+    Attempt tracking is per-order: lookup the most recent matching PAID
+    order, increment pin_attempts on validation miss (in a separate
+    transaction so the bump persists even when we then raise PinInvalid),
+    lock at PIN_MAX_ATTEMPTS. Once locked, even the correct PIN returns
+    PinLocked; QR scan still works as the bypass path.
+
+    This function is NOT wrapped in @transaction.atomic at the outer
+    boundary because the success / failure paths have different commit
+    semantics — see inline atomic blocks.
+    """
+    if not pin or len(pin) != 4 or not pin.isdigit():
+        raise PinInvalid()
+
+    owned_location_ids = _owned_business_location_ids(business_owner)
+    if business_location_id not in owned_location_ids:
+        # Same opaque response as PIN-not-found: don't leak which locations
+        # belong to which owner.
+        raise PinInvalid()
+
+    with transaction.atomic():
+        # Candidate: any PAID order at this location whose pickup_code matches.
+        # In rare cases there could be multiple — pick the one whose pickup
+        # window is currently open (else fall back to the first).
+        candidates = list(
+            Order.objects.select_for_update()
+            .filter(
+                business_location_id=business_location_id,
+                pickup_code=pin,
+                status=OrderStatus.PAID,
+            )
+            .select_related("bag", "consumer")
+            .order_by("bag__pickup_window_start")
+        )
+
+        if not candidates:
+            # No matching PAID order. A guess against a non-existent PIN
+            # costs nothing — we can't bump a counter on "no row" without
+            # leaking PIN existence. The 5-attempt cap protects a SPECIFIC
+            # known order from PIN guessing once an attacker knows it exists
+            # (e.g. shoulder-surfed the order screen). Acceptable tradeoff.
+            raise PinInvalid()
+
+        order = next(
+            (o for o in candidates if o.is_within_pickup_window()),
+            candidates[0],
+        )
+
+        # Lock check first — a locked order is unreachable via PIN even
+        # with the correct code. QR scan path still works.
+        if order.is_pin_locked:
+            raise PinLocked()
+
+        # Window failure is NOT a PIN miss — don't bump the counter.
+        # The PIN was right; the timing was wrong.
+        _assert_confirm_preconditions(order)
+
+        if order.status == OrderStatus.COMPLETED:
+            return order
+
+        # PIN matched + all preconditions OK → flip.
+        import uuid as _uuid
+
+        assert_can_transition(order.status, OrderStatus.COMPLETED)
+        order.status = OrderStatus.COMPLETED
+        order.picked_up_at = timezone.now()
+        order.qr_consumed_at = timezone.now()
+        order.pickup_qr_token = _uuid.uuid4()
+        order.save(
+            update_fields=[
+                "status",
+                "picked_up_at",
+                "qr_consumed_at",
+                "pickup_qr_token",
+                "updated_at",
+            ]
+        )
+        return order
+
+
+def register_pin_miss(*, business_owner, business_location_id: int, pin: str) -> None:
+    """Increment pin_attempts on the matching PAID order; lock at cap.
+
+    Called by the VIEW after confirm_pickup_by_pin raises PinInvalid, so
+    the counter bump runs in a fresh transaction (not rolled back with
+    the failed confirm). No-op if:
+      - PIN is malformed
+      - business_location is not owned by the caller (sealing the
+        cross-business remote-lock attack vector)
+      - no PAID order matches the PIN at the location
+    """
+    if not pin or len(pin) != 4 or not pin.isdigit():
+        return
+    owned_location_ids = _owned_business_location_ids(business_owner)
+    if business_location_id not in owned_location_ids:
+        return
+
+    with transaction.atomic():
+        order = (
+            Order.objects.select_for_update()
+            .filter(
+                business_location_id=business_location_id,
+                pickup_code=pin,
+                status=OrderStatus.PAID,
+            )
+            .order_by("bag__pickup_window_start")
+            .first()
+        )
+        if order is None or order.is_pin_locked:
+            return
+
+        new_attempts = order.pin_attempts + 1
+        order.pin_attempts = new_attempts
+        update_fields = ["pin_attempts", "updated_at"]
+        if new_attempts >= Order.PIN_MAX_ATTEMPTS:
+            order.pin_locked_at = timezone.now()
+            update_fields.append("pin_locked_at")
+        order.save(update_fields=update_fields)

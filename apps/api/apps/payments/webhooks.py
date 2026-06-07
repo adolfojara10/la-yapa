@@ -169,6 +169,43 @@ def _on_payment_succeeded(order: Order, tx: PaymentTransaction, event: WebhookEv
     except Exception:
         logger.exception("Push notification dispatch failed for order %s", order.id)
 
+    # Schedule pickup-reminder pushes for this order. Each task re-reads
+    # the order on execution and bails if the status isn't still PAID/READY,
+    # so cancellations between now and the eta don't leak notifications.
+    # Tasks scheduled via apply_async(eta=...) so Celery beat doesn't have
+    # to scan the orders table; in test settings (ALWAYS_EAGER=True) they
+    # run inline immediately.
+    _schedule_pickup_reminders(order)
+
+
+def _schedule_pickup_reminders(order: Order) -> None:
+    """Fire-and-forget scheduling. Wrapped in try/except so a Celery broker
+    outage doesn't fail the webhook (we'd rather lose a reminder than
+    lose a payment confirmation)."""
+    from datetime import timedelta
+
+    try:
+        from apps.orders.tasks import (
+            send_pickup_ready,
+            send_pickup_reminder_1h,
+            send_pickup_reminder_30min,
+        )
+
+        pickup_start = order.bag.pickup_window_start
+        pickup_end = order.bag.pickup_window_end
+        order_pk = str(order.pk)
+
+        # "Pickup ready" — when window opens.
+        send_pickup_ready.apply_async(args=[order_pk], eta=pickup_start)
+        # 1h before close.
+        send_pickup_reminder_1h.apply_async(args=[order_pk], eta=pickup_end - timedelta(hours=1))
+        # 30min before close.
+        send_pickup_reminder_30min.apply_async(
+            args=[order_pk], eta=pickup_end - timedelta(minutes=30)
+        )
+    except Exception:
+        logger.exception("Pickup-reminder scheduling failed for order %s", order.id)
+
 
 @transaction.atomic
 def _on_payment_failed(order: Order, tx: PaymentTransaction, event: WebhookEvent) -> None:

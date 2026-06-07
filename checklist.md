@@ -164,13 +164,266 @@ Before starting the next session, ALWAYS verify:
 - 🔒 Verify HMAC algorithm + header name match each provider's actual docs (currently HMAC-SHA256 + `X-PayPhone-Signature` / `X-DeUna-Signature`)
 - 🔒 Capture real-provider success + failure webhook samples, add as fixtures under `apps/payments/tests/fixtures/`
 
-#### 🎫 Pickup Tests _(Session 8 — consumer-side QR/PIN + countdown live; business-side scanner is Session 9)_
+#### 🎫 Pickup Tests _(Session 9 — full pickup loop: business app + scanner + Celery + push)_
 
-- [x] Order detail shows QR code (encodes `pickup_qr_token`) + 4-digit PIN
-- [x] Pickup-window countdown ticks ("Abre en 2h 15min" / "Cierra en 1h 30min" / "Ventana cerrada")
-- [x] "Cómo llegar" tap opens Google Maps with the business location's coordinates
-- 🔒 (pending: Celery worker started + beat schedule) Pickup reminder push arrives 1h + 30min before window closes
-- 🔒 (pending: business app scanner — Session 9) After pickup confirmed → consumer's status flips to `completed`
+> **Quickstart**: `cd apps/api && source .venv/bin/activate && python manage.py migrate && python manage.py seed_demo_data --reset`
+>
+> The seed prints test credentials at the end. **Password for every user is `test-pass-123`.**
+>
+> **Test accounts created by the seed:**
+>
+> | Email               | Role           | What they have                                                 |
+> | ------------------- | -------------- | -------------------------------------------------------------- |
+> | `owner@layapa.test` | business_owner | Owns "Panadería La Esperanza" with 2 active PAID orders + bags |
+> | `mateo@layapa.test` | consumer       | Has a PAID order ready for pickup (will show QR + PIN)         |
+> | `nora@layapa.test`  | consumer       | Has a PAID order ready for pickup                              |
+> | `sofia@layapa.test` | consumer       | Generic browsing persona                                       |
+> | `donor@layapa.test` | consumer       | Made a $3.00 general-pool suspended-meal donation              |
+>
+> The seed also prints each PAID order's `PIN`, `QR token`, and `order_id` so you can drive the API with curl without going through Django admin.
+
+##### Creating more test data on demand
+
+Repeat-running tests often requires fresh PAID orders + donations because once confirmed, an order is terminal (status=COMPLETED is irreversible). To regenerate:
+
+```bash
+# Wipe + re-seed (idempotent — `owner@layapa.test` retains the same email).
+python manage.py seed_demo_data --reset
+
+# Or create ad-hoc test data from the shell:
+python manage.py shell <<'EOF'
+from datetime import timedelta
+from decimal import Decimal
+from django.utils import timezone
+from apps.bags.factories import BagFactory
+from apps.businesses.models import Business
+from apps.orders.models import OrderStatus
+from apps.orders.services import create_order
+from apps.users.factories import ConsumerProfileFactory, UserFactory
+from apps.suspended_meals.models import SuspendedMealDonation, DonationStatus
+
+# Get the seeded business's first location.
+loc = Business.objects.get(name="Panadería La Esperanza").locations.first()
+
+# Make a fresh PAID order with a 2-hour pickup window starting now.
+consumer = UserFactory(email="ad-hoc@layapa.test", is_email_verified=True)
+ConsumerProfileFactory(user=consumer, first_name="AdHoc")
+bag = BagFactory(
+    business_location=loc,
+    original_price=Decimal("12.00"),
+    sale_price=Decimal("4.50"),
+    quantity_available=3,
+    pickup_window_start=timezone.now() + timedelta(minutes=5),
+    pickup_window_end=timezone.now() + timedelta(hours=2),
+)
+order = create_order(consumer=consumer, bag_id=bag.id, quantity=1)
+order.status = OrderStatus.PAID
+order.save(update_fields=["status"])
+print(f"Order {order.id} | PIN {order.pickup_code} | QR {order.pickup_qr_token}")
+
+# Make a fresh suspended-meal donation.
+donor = UserFactory(email=f"donor-{timezone.now().timestamp():.0f}@layapa.test")
+SuspendedMealDonation.objects.create(
+    donor=donor, amount=Decimal("3.00"), bag=None,
+    status=DonationStatus.ACTIVE, is_anonymous=True,
+)
+EOF
+```
+
+##### 🔁 Backend smoke (curl / httpie — no mobile required)
+
+Run against `manage.py runserver` after seeding. Get a JWT for the business owner first:
+
+```bash
+# 1. Login as the business owner — captures access token.
+ACCESS=$(curl -s -X POST http://localhost:8000/api/v1/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"owner@layapa.test","password":"test-pass-123"}' \
+  | python -c 'import json,sys;print(json.load(sys.stdin)["tokens"]["access"])')
+echo "Access: $ACCESS"
+
+# 2. Dashboard summary.
+curl -s http://localhost:8000/api/v1/business/dashboard \
+  -H "Authorization: Bearer $ACCESS" | python -m json.tool
+
+# 3. List active orders (use the order_id from one of these for the
+#    confirm-pickup tests below).
+curl -s http://localhost:8000/api/v1/business/orders/active \
+  -H "Authorization: Bearer $ACCESS" | python -m json.tool
+
+# 4. Confirm via QR (use a QR token printed by the seed).
+QR='<paste QR token here>'
+curl -s -X POST http://localhost:8000/api/v1/business/orders/confirm-pickup-by-scan \
+  -H "Authorization: Bearer $ACCESS" -H 'Content-Type: application/json' \
+  -d "{\"qr_token\":\"$QR\"}" | python -m json.tool
+# Expected: 200 + order with status="completed".
+
+# 5. Replay the same QR → should be 404 (single-use rotation).
+curl -s -X POST http://localhost:8000/api/v1/business/orders/confirm-pickup-by-scan \
+  -H "Authorization: Bearer $ACCESS" -H 'Content-Type: application/json' \
+  -d "{\"qr_token\":\"$QR\"}" -w "\nHTTP %{http_code}\n"
+
+# 6. Confirm via PIN against a different order. PIN + business_location_id
+#    are required. business_location_id is in the order list above.
+PIN='<paste PIN from seed output>'
+LOC=<paste business_location_id>
+curl -s -X POST http://localhost:8000/api/v1/business/orders/confirm-pickup-by-pin \
+  -H "Authorization: Bearer $ACCESS" -H 'Content-Type: application/json' \
+  -d "{\"business_location_id\":$LOC,\"pin\":\"$PIN\"}" | python -m json.tool
+
+# 7. PIN lockout: hit it 5 times with the wrong PIN, then watch the
+#    correct PIN bounce with 423.
+WRONG='0000'  # change if your seed accidentally generated this as a real PIN
+for i in 1 2 3 4 5; do
+  curl -s -X POST http://localhost:8000/api/v1/business/orders/confirm-pickup-by-pin \
+    -H "Authorization: Bearer $ACCESS" -H 'Content-Type: application/json' \
+    -d "{\"business_location_id\":$LOC,\"pin\":\"$WRONG\"}" -w "\nHTTP %{http_code}\n"
+done
+# Now the right PIN returns 423.
+curl -s -X POST http://localhost:8000/api/v1/business/orders/confirm-pickup-by-pin \
+  -H "Authorization: Bearer $ACCESS" -H 'Content-Type: application/json' \
+  -d "{\"business_location_id\":$LOC,\"pin\":\"$PIN\"}" -w "\nHTTP %{http_code}\n"
+
+# 8. Suspended-meal dispatch.
+curl -s http://localhost:8000/api/v1/business/suspended-meals/active \
+  -H "Authorization: Bearer $ACCESS" | python -m json.tool
+
+DONATION='<paste donation id from above>'
+curl -s -X POST http://localhost:8000/api/v1/business/suspended-meals/dispatch \
+  -H "Authorization: Bearer $ACCESS" -H 'Content-Type: application/json' \
+  -d "{\"donation_id\":\"$DONATION\",\"business_location_id\":$LOC,\"notes\":\"Cliente recurrente\"}" \
+  | python -m json.tool
+```
+
+##### Backend assertions (must hold)
+
+- [ ] `python manage.py seed_demo_data --reset` runs to completion + prints test credentials
+- [ ] `GET /business/dashboard` returns `active_orders_count: 2`, `suspended_meals_available: 1`
+- [ ] `GET /business/orders/active` returns the 2 PAID orders sorted by `pickup_window_start`, each with `consumer_first_name`, `pickup_code`, `is_within_pickup_window: true`
+- [ ] `GET /business/orders/active` as `sofia@layapa.test` (consumer role) returns 403
+- [ ] `POST /confirm-pickup-by-scan` with valid QR → 200, order completed, `pickup_qr_token` rotated to new UUID
+- [ ] Replay original QR → 404 `qr_invalid`
+- [ ] `POST /confirm-pickup-by-pin` with correct PIN → 200, order completed
+- [ ] 5x wrong PIN → 6th attempt with CORRECT PIN returns 423 `pin_locked`
+- [ ] After lockout, QR scan still works (verify by creating a fresh order + locking it via PIN miss + scanning the QR)
+- [ ] `POST /suspended-meals/dispatch` → 200, `claim_id` returned, donation no longer in `/suspended-meals/active`
+- [ ] 6th dispatch in 24h at same location → 429 `dispatch_rate_limit_exceeded`
+- [ ] `pytest apps/business/ apps/orders/ apps/suspended_meals/ apps/notifications/` passes (202 tests at 90%)
+
+##### 📱 Mobile smoke (Android dev client — `pnpm --filter @layapa/mobile dev`)
+
+**One-time setup if you added native deps since last build:**
+
+```bash
+pnpm --filter @layapa/mobile exec expo run:android --device
+# expo-camera and expo-notifications are native modules; first run after
+# install requires this rebuild. Documented in AGENTS.md §5.
+```
+
+**Business app — log in as `owner@layapa.test`:**
+
+- [ ] App lands on `(business)/(tabs)` dashboard automatically (routing guard)
+- [ ] Header reads "Tus pedidos de hoy · 2 activos · 0 completados · 1 suspendidas disponibles"
+- [ ] Action row shows "Escanear QR" + "Ingresar PIN"
+- [ ] Active orders list shows Mateo + Nora's bags with the PIN displayed in large green text
+- [ ] Tap "Escanear QR" → grants camera permission (first time) → camera preview shows
+- [ ] Open consumer app on a SECOND device (or use a phone in dev + a real device for vendor), log in as `mateo@layapa.test`, navigate to `/(consumer)/orders/<id>`, point business app camera at the QR
+- [ ] Scanner detects QR → "¡Pedido confirmado!" toast → navigates to business order detail with COMPLETED badge
+- [ ] On the consumer device, the order detail polls and within ~2s flips from "Esperando" to a completed state
+- [ ] Tap "Ingresar PIN" → bottom sheet with 4-digit OTP input → type Nora's pickup code → "Confirmar retiro" → success
+- [ ] Type a wrong PIN → "PIN incorrecto" toast
+- [ ] Repeat 5 wrong PINs → 6th attempt with correct PIN → "PIN bloqueado — usa el QR" toast
+- [ ] Switch to Suspendidas tab → shows Sofía's $3.00 anonymous donation in "Pool general"
+- [ ] Tap donation → bottom sheet with notes input → type a note → "Confirmar dispatch" → success toast + list updates
+- [ ] Repeat dispatch 5 times (use `seed_demo_data --reset` + recreate donations in shell as needed) → 6th attempt → `Alert.alert` "Límite diario alcanzado"
+- [ ] Profile tab → "Cerrar sesión" → back to welcome screen
+
+**Consumer app — log in as `mateo@layapa.test`:**
+
+- [ ] App lands on `(consumer)/(tabs)` with the active-order banner pinned at top
+- [ ] Tap banner → order detail with QR code + 4-digit PIN displayed
+- [ ] After business confirms (above), this screen polls and updates within ~2s
+
+##### 🔔 Push notification smoke (requires Celery worker running)
+
+The pickup-ready push fires at `pickup_window_start`, and reminders fire 1h + 30min before `pickup_window_end`. For the seeded orders these are 10-110 minutes out, so to test push delivery you need to either wait or create an order with a tighter window.
+
+**Start the worker + beat** (two terminals, both with `.venv` activated):
+
+```bash
+# Terminal 1 — worker
+cd apps/api && source .venv/bin/activate
+celery -A config worker -l info
+
+# Terminal 2 — beat (only needed for the hourly expire_stale_pending sweep)
+cd apps/api && source .venv/bin/activate
+celery -A config beat -l info -s /tmp/celerybeat-schedule
+```
+
+**Trigger a push in 2 minutes** via the shell:
+
+```bash
+python manage.py shell <<'EOF'
+from datetime import timedelta
+from decimal import Decimal
+from django.utils import timezone
+from apps.bags.factories import BagFactory
+from apps.businesses.models import Business
+from apps.orders.models import OrderStatus
+from apps.orders.services import create_order
+from apps.users.factories import ConsumerProfileFactory, UserFactory
+from apps.orders.tasks import send_pickup_ready
+
+loc = Business.objects.get(name="Panadería La Esperanza").locations.first()
+consumer = UserFactory(email=f"pushtest-{timezone.now().timestamp():.0f}@layapa.test", is_email_verified=True)
+ConsumerProfileFactory(user=consumer, first_name="Test")
+bag = BagFactory(
+    business_location=loc,
+    original_price=Decimal("12.00"), sale_price=Decimal("4.50"),
+    quantity_available=1,
+    pickup_window_start=timezone.now() + timedelta(minutes=2),
+    pickup_window_end=timezone.now() + timedelta(hours=1),
+)
+order = create_order(consumer=consumer, bag_id=bag.id, quantity=1)
+order.status = OrderStatus.PAID
+order.save(update_fields=["status"])
+# Schedule manually since we bypassed the payment webhook.
+send_pickup_ready.apply_async(args=[str(order.id)], eta=bag.pickup_window_start)
+print(f"Scheduled push for {bag.pickup_window_start}")
+EOF
+```
+
+- [ ] Celery worker log shows the task accepted with `eta=`
+- [ ] At T+2min, worker log shows `Task apps.orders.tasks.send_pickup_ready[...] succeeded`
+- 🔒 (pending: device logged in with push permission granted + real Expo push token) Notification arrives on device — currently the push hits Expo's API with the registered token but actual delivery requires a real device + a real (not simulator) push token
+- 🔒 (pending: real device test) Tapping the notification deep-links to `/(consumer)/orders/<id>`
+
+##### 🔔 Push token registration sub-smoke
+
+- [ ] Log into mobile app on a real Android device → first cold-start triggers `useRegisterPushToken` → `apps.notifications.models.PushToken` row appears for the user (verify via Django admin → Notifications → Push tokens)
+- [ ] Token is `ExponentPushToken[...]` format
+- [ ] Logging out and back in as a different user → second `PushToken` row appears (different user, same token if same device)
+- [ ] `POST /api/v1/notifications/register-token` is idempotent — re-posting same body doesn't duplicate rows
+
+##### Anti-fraud assertions (security-critical)
+
+- [ ] **QR single-use**: confirmed by smoke step 5 above
+- [ ] **PIN per-order lockout**: confirmed by smoke step 7
+- [ ] **Cross-business isolation**: create a second business owner via shell, attempt to confirm `owner@layapa.test`'s order → 404 (not 403; we intentionally don't leak existence)
+
+```bash
+python manage.py shell <<'EOF'
+from apps.users.factories import BusinessOwnerFactory
+from apps.businesses.factories import BusinessFactory, BusinessLocationFactory
+attacker = BusinessOwnerFactory(email="attacker@layapa.test", is_email_verified=True)
+biz = BusinessFactory(owner=attacker, name="Attacker Foods")
+BusinessLocationFactory(business=biz)
+print("Login as attacker@layapa.test / test-pass-123 and try to confirm another business's order.")
+EOF
+```
+
+- [ ] **Window grace bounds** (60min early / 15min late): default seed bags have pickup_window_start = now + 10min, so they're already in the early grace window. Edit a bag in Django admin to `pickup_window_start = now + 3h` and re-test → 409 `outside_pickup_window`. Set it to `now - 3h` end → 409 again.
+- [ ] **Cross-business PIN-lock DoS sealed**: as `attacker@layapa.test`, hit `/confirm-pickup-by-pin` 5x with `owner@layapa.test`'s location_id + a guessed PIN → check via Django admin that the target order's `pin_attempts` is STILL 0 (the service-layer ownership check prevents the bump)
 
 #### 🚨 Red Flags
 

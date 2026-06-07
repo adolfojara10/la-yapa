@@ -10,21 +10,23 @@ future work. Update at the end of every session.
 
 ## 🔭 Current state (at a glance)
 
-| Layer                                 | Status                               | Notes                                                                                                                                 |
-| ------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Monorepo (pnpm + Turborepo)           | ✅ Working                           | `pnpm install` clean, lockfile committed                                                                                              |
-| CI (GitHub Actions)                   | ✅ Green                             | JS job + Django job (PostGIS + Redis service containers)                                                                              |
-| Pre-commit hooks                      | ✅ Working                           | Husky → Prettier on JS/MD; Python via separate `pre-commit`                                                                           |
-| Design system (`@layapa/ui`)          | ✅ v1                                | Tokens single-source, light/dark, type scale, motion                                                                                  |
-| Mobile (Expo SDK 54)                  | ✅ Scaffold                          | Theme + 11 components + `/design-system` + Yapi/Logo SVGs · Android dev client building on Linux (JDK 17 + ninja + Metro React-dedup) |
-| Admin (Next.js 14)                    | ✅ Scaffold                          | Tailwind + next-themes + 8 shadcn-style primitives + showcase page                                                                    |
-| Django API (`apps/api`)               | ✅ Auth + data + consumer + checkout | 32 models · 26 migrations · 162 tests · 90% coverage · enriched seed                                                                  |
-| DRF endpoints                         | ✅ Auth + browse + checkout          | 11 auth + `/users/me` + 4 browse + 5 orders + 1 charge + 2 webhooks + bonus-credit                                                    |
-| Auth (JWT + social)                   | ✅ End-to-end                        | Email/password + OTP verification + Google + Apple + password reset + 15min access / 7d refresh w/ rotation + blacklist               |
-| Mobile features (auth, browse, order) | ✅ Checkout WebView                  | Order create + payment WebView + QR/PIN order detail + cancel flow + bonus credits surfaced                                           |
-| Payments (PayPhone, DeUna)            | ✅ Backend, ⚠️ unverified            | Provider classes + webhook handlers + refund flow + state machine all built; **no real sandbox account yet** (see checklist)          |
-| Admin features (approvals, payouts)   | ⏳ Not started                       |                                                                                                                                       |
-| Real Yapi artwork                     | ⏳ Placeholder SVGs                  | Awaiting illustrator commission                                                                                                       |
+| Layer                                 | Status                                        | Notes                                                                                                                                 |
+| ------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Monorepo (pnpm + Turborepo)           | ✅ Working                                    | `pnpm install` clean, lockfile committed                                                                                              |
+| CI (GitHub Actions)                   | ✅ Green                                      | JS job + Django job (PostGIS + Redis service containers)                                                                              |
+| Pre-commit hooks                      | ✅ Working                                    | Husky → Prettier on JS/MD; Python via separate `pre-commit`                                                                           |
+| Design system (`@layapa/ui`)          | ✅ v1                                         | Tokens single-source, light/dark, type scale, motion                                                                                  |
+| Mobile (Expo SDK 54)                  | ✅ Scaffold                                   | Theme + 11 components + `/design-system` + Yapi/Logo SVGs · Android dev client building on Linux (JDK 17 + ninja + Metro React-dedup) |
+| Admin (Next.js 14)                    | ✅ Scaffold                                   | Tailwind + next-themes + 8 shadcn-style primitives + showcase page                                                                    |
+| Django API (`apps/api`)               | ✅ Auth + data + consumer + checkout + pickup | 32 models · 27 migrations · 202 tests · 90% coverage · enriched seed                                                                  |
+| DRF endpoints                         | ✅ Auth + browse + checkout + business        | 11 auth + `/users/me` + 4 browse + 5 orders + 1 charge + 2 webhooks + 9 business + 1 push-token                                       |
+| Auth (JWT + social)                   | ✅ End-to-end                                 | Email/password + OTP verification + Google + Apple + password reset + 15min access / 7d refresh w/ rotation + blacklist               |
+| Mobile features (auth, browse, order) | ✅ Consumer + business apps                   | Consumer: order detail polling. Business: QR scanner + PIN entry + suspended-meals dispatch + dashboard                               |
+| Payments (PayPhone, DeUna)            | ✅ Backend, ⚠️ unverified                     | Provider classes + webhook handlers + refund flow + state machine all built; **no real sandbox account yet** (see checklist)          |
+| Celery (tasks + beat)                 | ✅ Wired                                      | Refund task + pickup-reminder tasks + hourly stale-order sweep; worker/beat run from terminal or commented docker-compose services    |
+| Push notifications                    | ✅ End-to-end                                 | Device tokens registered via `/notifications/register-token`; pickup-ready + 1h + 30min reminders scheduled on PAID                   |
+| Admin features (approvals, payouts)   | ⏳ Not started                                |                                                                                                                                       |
+| Real Yapi artwork                     | ⏳ Placeholder SVGs                           | Awaiting illustrator commission                                                                                                       |
 
 ---
 
@@ -694,24 +696,181 @@ on the device — run after a fresh `expo start -c`):
 
 ---
 
+### Session 9 — Pickup flow (QR + PIN) + Celery + push notifications
+
+**Built**
+
+- \*\*Backend (`apps.orders` + `apps.business` + `apps.suspended_meals`
+  - `apps.notifications`):\*\*
+  * New fields on Order (`pin_attempts`, `pin_locked_at`, `qr_consumed_at`),
+    one migration `orders/0004_*`.
+  * State-machine helpers on Order: `is_within_pickup_window()`
+    (60min early / 15min late grace — deliberate deviation from spec's
+    strict ±15min; matches surplus-food prep flexibility), `is_pin_locked`.
+  * `confirm_pickup_by_qr(business_owner, qr_token)` — single-use QR
+    enforcement via token rotation: on successful confirm, `qr_consumed_at`
+    is set AND `pickup_qr_token` rotates to a fresh UUID, so a replay
+    of the original returns 404 indistinguishable from a forged token.
+  * `confirm_pickup_by_pin(business_owner, business_location_id, pin)` —
+    5-attempt brute-force protection per-order. Cap is `PIN_MAX_ATTEMPTS`
+    on Order; locked orders return 423 LOCKED even with the correct PIN.
+    QR scan path bypasses the lock (the unlocked recovery channel).
+  * `register_pin_miss(business_owner, ...)` enforces ownership at the
+    service boundary — sealed the cross-business remote-lock DoS vector
+    where a malicious business owner could lock a competitor's customer's
+    PIN by spamming the endpoint with their location_id.
+  * `apps.suspended_meals.services.dispatch_donation` — vendor confirms
+    dispatch with optional notes. Anti-abuse: hard cap of 5 dispatches
+    per business_location per rolling 24h (`DAILY_DISPATCH_CAP_PER_LOCATION`
+    in `apps/suspended_meals/services.py`). 6th attempt returns 429.
+    Anonymous "Tu yapa alimentó a alguien hoy 🌱" push to donor on
+    success (best-effort, swallowed if dispatcher fails).
+  * **New `apps.business` app** (presentation-only, zero models —
+    mirrors `apps.consumer`'s shape) under `/api/v1/business/*`:
+    - `GET /dashboard` — active orders + today completed + suspended-meals counts
+    - `GET /orders/active` — non-terminal orders across all owned locations,
+      sorted by `pickup_window_start`. Excludes PENDING_PAYMENT.
+    - `GET /orders/today` — terminal orders from today (history)
+    - `GET /orders/{id}` — single order detail (privacy-first: consumer
+      first name only, no email/phone/last name)
+    - `POST /orders/confirm-pickup-by-scan` — QR-only fast path for scanner
+    - `POST /orders/confirm-pickup-by-pin` — PIN-only path for manual entry
+    - `POST /orders/{id}/confirm-pickup` — spec endpoint accepting either
+    - `GET /suspended-meals/active` — active donations (bag-bound for
+      owned locations + general pool)
+    - `POST /suspended-meals/dispatch` — confirms claim + notes + push
+  * `POST /api/v1/notifications/register-token` — idempotent
+    Expo-push-token registration (`update_or_create` on token). Without
+    this endpoint, the Celery pickup-reminder tasks fire but reach zero
+    devices; including it makes the spec's push deliverables actually
+    deliverable.
+
+- **Celery setup (first real async infra):**
+  - `config/celery.py` extended with beat schedule (hourly
+    `expire_stale_pending_orders` sweep).
+  - `apps/orders/tasks.py` registers 4 tasks: `send_pickup_ready`,
+    `send_pickup_reminder_1h`, `send_pickup_reminder_30min`,
+    `expire_stale_pending_orders`.
+  - `apps/payments/tasks.py` migrates `refund_payment` to a Celery task
+    so cancel requests don't block on provider HTTP. Tests still run
+    sync via `CELERY_TASK_ALWAYS_EAGER=True`.
+  - Webhook `_on_payment_succeeded` schedules the 3 pickup-reminder tasks
+    via `apply_async(eta=...)` on PAID transition. Wrapped in try/except
+    so a broker outage doesn't fail the webhook.
+  - `docker-compose.yml` gains commented-out `worker` + `beat` services
+    (default dev runs them in terminals; see AGENTS.md §4).
+
+- **Mobile (`apps/mobile`):**
+  - `(business)/` rebuilt: bottom tabs (Pedidos · Suspendidas · Perfil) +
+    top-level `orders/[id]` + `orders/scan` modal.
+  - Dashboard (`(tabs)/index`): header summary, "Escanear QR" +
+    "Ingresar PIN" action buttons, active orders worklist.
+  - Scanner (`orders/scan.tsx`): `expo-camera` with `barcodeScannerSettings`
+    locked to `qr` type, debounced via ref so one QR doesn't fire twice,
+    permission flow with "Abrir ajustes" deep link on denial.
+  - Order detail: consumer name + qty + dietary chips, "Confirmar con PIN"
+    - "Escanear QR" CTAs. Suspended-meal flagged with "no espera retiro"
+      banner.
+  - Suspended tab: donation cards → tap opens dispatch sheet with notes
+    textarea. Rate-limit error surfaces as `Alert.alert` (not toast)
+    because it's actionable info ("you've hit the daily cap").
+  - `PinEntrySheet` component: bottom sheet that reuses the auth-flow
+    `OtpInput` at `length=4` for the 4-digit pickup code.
+  - `useRegisterPushToken` hook: called from `app/_layout.tsx`'s
+    `ThemedShell` post-auth. Permission flow + token fetch +
+    POST `/notifications/register-token`. Failures swallowed.
+  - **+7 mobile tests** (48 total): PinEntrySheet submission flow,
+    business API URL/method shape, push-token registration behaviors.
+
+- **Shared types:** `business.ts` extended with `BusinessOrder`,
+  `BusinessDashboardSummary`, confirm-pickup payloads,
+  `SuspendedMealForDispatch`, `DispatchSuspendedPayload`. Existing
+  `Business` domain model preserved.
+
+- **Seed:** Two PAID consumer orders + one ACTIVE general-pool suspended-
+  meal donation, so the business dashboard + suspended tab have content
+  out of the box.
+
+**Decisions**
+
+- **Pickup window grace: 60min early / 15min late.** Deliberate deviation
+  from MASTER_VISION's strict ±15min. Vendors often serve early arrivals;
+  60min early allows that without enabling the "accidentally completed
+  at 10am for a 6pm pickup" footgun (which a fully-open early window
+  would). Same `OutsidePickupWindow` error code on both sides.
+- **QR token rotation on consumption** (not just a `qr_consumed_at` flag).
+  Second scan of the original returns 404 — indistinguishable from forged.
+  Forensic trail kept via `picked_up_at` + `qr_consumed_at` timestamps.
+- **PIN lockout per-order, not per-IP.** The 5-attempt cap protects a
+  specific known order from PIN-guessing once an attacker knows it
+  exists (e.g. shoulder-surfed). A non-existent PIN guess costs nothing
+  (we can't bump a counter on a row that doesn't exist without leaking
+  PIN existence). Documented in `confirm_pickup_by_pin` docstring.
+- **`register_pin_miss` checks ownership** at the service layer
+  (not just the view), sealing the cross-business remote-lock attack
+  where a malicious owner could spam another business's location_id +
+  guessed PIN to lock a customer's order.
+- **Dispatch rate-limit (5/day/location)** matches MASTER_VISION §847.
+  6th dispatch in rolling 24h returns 429.
+- **Celery worker + beat run from terminals**, not Docker, in default
+  dev. Docker definitions are commented in `docker-compose.yml` for
+  the "I'd rather run it in Docker" path. Aligns with Session 5's
+  "API runs from venv" precedent.
+- **Tests use `CELERY_TASK_ALWAYS_EAGER=True`** so all task dispatch is
+  inline and deterministic. No worker needed for `pytest`.
+- **Push-token registration eager-fires on every authed cold start.**
+  Backend is idempotent (`update_or_create` on token), so re-running
+  refreshes the row's user/platform. Detects device handoffs cleanly.
+
+**Caveats / known gaps**
+
+- **Mobile push-token registration uses `expo-notifications` which needs
+  a native rebuild** on Android. After `pnpm install`, run
+  `pnpm --filter @layapa/mobile exec expo run:android --device` once
+  to pick up the new module.
+- **Pickup-reminder pushes only fire when the worker is running.** In
+  dev that means `celery -A config worker -l info` + `celery -A config
+beat -l info` in two terminals. Without them, `apply_async(eta=...)`
+  enqueues to Redis but nothing dequeues — reminders silently never
+  send. Tests bypass via `CELERY_TASK_ALWAYS_EAGER=True`.
+- **`expo-camera` requires native rebuild** (same drill as
+  `@rnmapbox/maps`, Session 7). Documented in AGENTS.md §5.
+- **PIN-test orchestration is awkward** because `confirm_pickup_by_pin`
+  completes the order on a correct PIN match, leaving no path to test
+  "5 wrong guesses lock the order" purely through HTTP. We test
+  `register_pin_miss` directly at the service level instead. The HTTP
+  path is tested for happy path + lock state, but not for the
+  miss → lock progression.
+- **Multi-location vendors get a single-location PIN-entry default**:
+  the PIN sheet picks the location of the first active order. Real
+  multi-location businesses (Phase 2) will need a location picker
+  inside the sheet.
+- **Business app icons / branding / Yapi mascot**: still using consumer-
+  app theme. No business-specific colors or imagery.
+- **Confirm-pickup endpoint isn't rate-limited** at the HTTP level.
+  PIN brute-force is gated by the 5-attempt per-order cap, and QR is
+  cryptographically hard to guess (UUID), so brute-forcing the endpoint
+  itself doesn't help. Could add `django-ratelimit` for defense in
+  depth if abuse signals appear.
+
+---
+
 ## 🎯 Next-up priorities
 
-### Phase 1 — Consumer Core MVP (Weeks 3-6 of the master roadmap)
+### Phase 1/2 — what's left for MVP
 
-1. **Business-side mobile** — bag CRUD, today's orders list, scan QR /
-   PIN entry → calls `complete_order`. Closes the pickup loop.
+1. **Bag CRUD for business app** — vendor can create/edit/disable bags
+   from the mobile app (today the only path is Django admin).
 2. **Provision PayPhone + DeUna sandbox accounts** and run the real-
-   provider smoke checklist; fix any payload-shape divergences from the
-   defensive parsers.
-3. **Celery worker setup** — async refund task + scheduled
-   `expire_stale_pending` + push notification batching.
-4. **Favorites list UI** — turn the placeholder Favoritos tab into a
-   real list with active-bag indicators per business.
-5. **Profile tab fleshed out** — edit profile, language toggle, dietary
-   preferences, referral code share + redemption.
-6. **Mapbox geocoding proxy** on the backend with caching, so the mobile
-   geocoder isn't hitting Mapbox direct and we get one place to add
-   per-user rate limiting.
+   provider smoke checklist; capture real webhook fixtures and add
+   fixture-based tests so payload-shape drift fails CI.
+3. **Business onboarding wizard** — RUC/cédula upload, location +
+   hours, food-safety acceptance. Today businesses are created via
+   `seed_demo_data` or Django admin only.
+4. **Favorites list UI** + **Profile editing** (consumer side) — both
+   placeholders since Sessions 6/7.
+5. **Mapbox geocoding proxy** on the backend with caching.
+6. **Custom Yapi mascot artwork + business app branding pass.**
 
 ### Phase 2 — Business core (Weeks 7-9)
 
@@ -751,14 +910,14 @@ on the device — run after a fresh `expo start -c`):
 ## 🔢 Stats snapshot
 
 ```
-JS / TS files:    ~160 (mobile + admin + packages)
-Python files:    ~130 (apps + migrations + config)
-Django models:    32 (BonusCredit + WebhookEventLog added Session 8)
-Migrations:       26 (orders 0003 + payments 0003 added Session 8)
-Tests passing:   162 (Python, +4 PostGIS-skipped under SQLite shim), 41 (JS — mobile)
+JS / TS files:    ~185 (mobile + admin + packages)
+Python files:    ~150 (apps + migrations + config + tasks + services)
+Django models:    32 (no new models in Session 9 — apps.business is view-layer only)
+Migrations:       27 (orders 0004 added Session 9)
+Tests passing:   202 (Python, +4 PostGIS-skipped under SQLite shim), 48 (JS — mobile)
 Coverage (API):   90%
 CI duration:     ~3 min (JS job) + ~2 min (Django job)
-Dependencies:    ~1570 npm packages, ~130 Python packages (with dev extras)
+Dependencies:    ~1580 npm packages, ~130 Python packages (with dev extras)
 ```
 
 ---

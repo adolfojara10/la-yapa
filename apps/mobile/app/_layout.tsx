@@ -16,6 +16,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useAuthStore, wireAuthCallbacks } from '@/auth/store';
 import { ToastProvider } from '@/components/ui/Toast';
+import { useRegisterPushToken } from '@/notifications/useRegisterPushToken';
 import { ThemeProvider, useTheme } from '@/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => null);
@@ -79,7 +80,7 @@ function AuthGuard() {
       return;
     }
     if (user.role === 'business_owner') {
-      if (!inBusinessGroup) router.replace('/(business)');
+      if (!inBusinessGroup) router.replace('/(business)/(tabs)');
       return;
     }
     // admin / sales_rep should use the web admin; bounce them out.
@@ -94,6 +95,10 @@ function AuthGuard() {
 
 function ThemedShell() {
   const { theme } = useTheme();
+  // Registers the device's Expo push token with the backend once per
+  // authed user. No-op when unauthed. Failures are swallowed; the app
+  // continues to work without push if permission is denied.
+  useRegisterPushToken();
   return (
     <>
       <StatusBar style={theme.mode === 'dark' ? 'light' : 'dark'} />

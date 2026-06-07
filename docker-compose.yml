@@ -58,6 +58,42 @@ services:
   #     redis:
   #       condition: service_healthy
 
+  # Celery worker — processes async tasks (refunds, pickup-reminder pushes).
+  # In dev, easier to run from a terminal alongside `manage.py runserver`:
+  #   cd apps/api && source .venv/bin/activate && celery -A config worker -l info
+  # Uncomment if you'd rather run inside Docker.
+  # worker:
+  #   build:
+  #     context: ./apps/api
+  #   container_name: layapa-worker
+  #   command: celery -A config worker -l info
+  #   volumes:
+  #     - ./apps/api:/app
+  #   env_file:
+  #     - ./apps/api/.env
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+
+  # Celery beat — schedules periodic tasks (stale-order expiry sweep).
+  # Local dev: `celery -A config beat -l info -s /tmp/celerybeat-schedule`
+  # beat:
+  #   build:
+  #     context: ./apps/api
+  #   container_name: layapa-beat
+  #   command: celery -A config beat -l info -s /tmp/celerybeat-schedule
+  #   volumes:
+  #     - ./apps/api:/app
+  #   env_file:
+  #     - ./apps/api/.env
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+
 volumes:
   postgres_data:
   redis_data:

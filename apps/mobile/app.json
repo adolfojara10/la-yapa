@@ -42,7 +42,14 @@
           "locationAlwaysAndWhenInUsePermission": "Usamos tu ubicación para mostrarte bolsas cerca de ti.",
           "locationWhenInUsePermission": "Usamos tu ubicación para mostrarte bolsas cerca de ti."
         }
-      ]
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "La cámara se usa para escanear el código QR del pedido al confirmar el retiro."
+        }
+      ],
+      "expo-notifications"
     ],
     "experiments": {
       "typedRoutes": false

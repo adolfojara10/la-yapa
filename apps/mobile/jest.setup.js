@@ -42,6 +42,22 @@ jest.mock('expo-location', () => ({
   Accuracy: { Balanced: 3 },
 }));
 
+// expo-camera: inert View + permission stub.
+jest.mock('expo-camera', () => {
+  const { View } = require('react-native');
+  return {
+    CameraView: View,
+    useCameraPermissions: () => [{ granted: true, status: 'granted' }, jest.fn()],
+  };
+});
+
+// expo-notifications: deterministic permission + token fixtures.
+jest.mock('expo-notifications', () => ({
+  getPermissionsAsync: jest.fn(async () => ({ status: 'undetermined' })),
+  requestPermissionsAsync: jest.fn(async () => ({ status: 'granted' })),
+  getExpoPushTokenAsync: jest.fn(async () => ({ data: 'ExponentPushToken[test-fixture]' })),
+}));
+
 // expo-image: render as a plain View so render-tree tests don't blow up.
 jest.mock('expo-image', () => {
   const { View } = require('react-native');
@@ -85,11 +101,23 @@ jest.mock('@rnmapbox/maps', () => {
 });
 
 // @gorhom/bottom-sheet: simple passthrough so screens that mount it don't crash.
+// We use forwardRef so imperative-handle .snapToIndex/.close are no-op
+// functions instead of undefined.
 jest.mock('@gorhom/bottom-sheet', () => {
+  const React = require('react');
   const { View, FlatList, ScrollView } = require('react-native');
+  const BottomSheet = React.forwardRef(function BottomSheetMock({ children }, ref) {
+    React.useImperativeHandle(ref, () => ({
+      snapToIndex: jest.fn(),
+      snapToPosition: jest.fn(),
+      close: jest.fn(),
+      expand: jest.fn(),
+    }));
+    return React.createElement(View, null, children);
+  });
   return {
     __esModule: true,
-    default: View,
+    default: BottomSheet,
     BottomSheetFlatList: FlatList,
     BottomSheetScrollView: ScrollView,
     BottomSheetView: View,

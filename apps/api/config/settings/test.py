@@ -22,6 +22,10 @@ USE_FAKE_PAYMENT_PROVIDER = True
 PAYPHONE_WEBHOOK_SECRET = "test-payphone-webhook-secret"
 DEUNA_WEBHOOK_SECRET = "test-deuna-webhook-secret"
 
+# Celery: tasks run inline, no worker required.
+CELERY_TASK_ALWAYS_EAGER = True
+CELERY_TASK_EAGER_PROPAGATES = True
+
 # SQLite for unit tests.
 DATABASES = {
     "default": {

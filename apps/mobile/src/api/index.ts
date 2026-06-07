@@ -5,3 +5,5 @@ export * as bagsApi from './bags';
 export * as favoritesApi from './favorites';
 export * as ordersApi from './orders';
 export * as paymentsApi from './payments';
+export * as businessApi from './business';
+export * as notificationsApi from './notifications';

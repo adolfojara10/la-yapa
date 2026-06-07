@@ -361,6 +361,39 @@ The post-launch plan:
 
 Until then, the WebView-only checkout is the supported flow.
 
+### Running Celery locally
+
+The async task pipeline (pickup-reminder pushes, refund dispatch, stale-
+order expiry sweep) runs on Celery. In tests `CELERY_TASK_ALWAYS_EAGER=True`
+so tasks run inline without a worker — `pytest` works out of the box.
+
+For real dev (e.g. testing scheduled pickup-reminder pushes against a real
+device), run worker + beat alongside `manage.py runserver`:
+
+```bash
+cd apps/api && source .venv/bin/activate
+celery -A config worker -l info                       # one terminal
+celery -A config beat -l info -s /tmp/celerybeat-schedule   # another
+```
+
+Both processes need the same env vars as `runserver` (most importantly
+`REDIS_URL` and `DATABASE_URL`). Redis is the broker; Postgres backs the
+result store via `django-celery-results` (not yet wired — results are
+discarded by default, which is fine for our fire-and-forget tasks).
+
+The `docker-compose.yml` includes commented-out `worker` + `beat` service
+definitions if you'd rather run them in Docker.
+
+**Tasks registered today** (Session 9):
+
+- `apps.orders.tasks.send_pickup_ready` — scheduled via
+  `apply_async(eta=...)` at PAID transition for `pickup_window_start`.
+- `apps.orders.tasks.send_pickup_reminder_1h` — same, 1h before close.
+- `apps.orders.tasks.send_pickup_reminder_30min` — same, 30min before close.
+- `apps.orders.tasks.expire_stale_pending_orders` — beat-scheduled hourly.
+- `apps.payments.tasks.refund_payment_task` — kicked off from
+  `cancel_order`'s `transaction.on_commit` hook when refund is owed.
+
 ---
 
 ## 5. Things that look wrong but are correct

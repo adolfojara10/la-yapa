@@ -6,28 +6,28 @@ import { Button } from '@/components/ui/Button';
 import { Text } from '@/components/ui/Text';
 import { useTheme } from '@/theme';
 
-export default function BusinessHome() {
+export default function BusinessProfile() {
   const { theme } = useTheme();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.background }]}>
-      <View style={styles.body}>
-        <Text variant="h1" style={{ color: theme.colors.primary }}>
-          ¡Bienvenido!
+      <View style={styles.header}>
+        <Text variant="h2" style={{ color: theme.colors.text }}>
+          Mi negocio
         </Text>
-        <Text variant="body" style={{ color: theme.colors.textMuted, marginTop: 8 }}>
+        <Text variant="body" style={{ color: theme.colors.textMuted, marginTop: 4 }}>
           {user?.email}
         </Text>
-        <Text variant="body" style={{ color: theme.colors.textMuted, marginTop: 16 }}>
-          La onboarding de negocios (RUC, ubicación, primera bolsa) llega en la próxima sesión.
+        <Text variant="small" style={{ color: theme.colors.textMuted, marginTop: 24 }}>
+          Configuración de negocio, equipo, payouts y onboarding llegan en próximas sesiones.
         </Text>
-        <View style={{ marginTop: 24 }}>
-          <Button variant="ghost" onPress={logout}>
-            Cerrar sesión
-          </Button>
-        </View>
+      </View>
+      <View style={{ marginTop: 32 }}>
+        <Button variant="ghost" onPress={logout} fullWidth>
+          Cerrar sesión
+        </Button>
       </View>
     </SafeAreaView>
   );
@@ -35,5 +35,5 @@ export default function BusinessHome() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, paddingHorizontal: 24 },
-  body: { flex: 1, justifyContent: 'center' },
+  header: { marginTop: 24 },
 });

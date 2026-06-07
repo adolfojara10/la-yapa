@@ -96,6 +96,20 @@ class Order(UUIDPrimaryKeyModel, TimestampedModel):
     # status stays pending_refund until ops resolves manually.
     refund_failed_at = models.DateTimeField(null=True, blank=True)
 
+    # ----- pickup anti-fraud -----
+    # PIN attempt counter, scoped per-order. After PIN_MAX_ATTEMPTS bad PINs
+    # we set pin_locked_at; further PIN attempts return 423 LOCKED until ops
+    # resets pin_locked_at via Django admin. QR scan path bypasses the lock
+    # (QR is cryptographically harder to guess than a 4-digit code).
+    pin_attempts = models.PositiveSmallIntegerField(default=0)
+    pin_locked_at = models.DateTimeField(null=True, blank=True)
+
+    # Single-use QR enforcement. On successful pickup confirmation via QR,
+    # we set qr_consumed_at AND rotate pickup_qr_token to a fresh UUID so
+    # the old token is no longer in DB. Second scan of the original returns
+    # 404 (indistinguishable from a forged token; no info leak).
+    qr_consumed_at = models.DateTimeField(null=True, blank=True)
+
     # Transient flag (not persisted in form): when True at create_order time,
     # a SuspendedMealDonation is generated alongside the order's payment success.
     # Persisted so the webhook handler can read it without a second round-trip.
@@ -123,6 +137,18 @@ class Order(UUIDPrimaryKeyModel, TimestampedModel):
     # (matches Too Good To Go's policy; documented in PROGRESS.md Session 8).
     CONSUMER_CANCEL_LEAD_TIME_SECONDS = 60 * 60
 
+    # PIN brute-force cap.
+    PIN_MAX_ATTEMPTS = 5
+
+    # Pickup window grace: vendor can confirm up to 60min before window
+    # opens (lets them serve early arrivals) and up to 15min after it
+    # closes (covers small clock drift / late vendor confirms). Outside
+    # this band, confirm_pickup raises OutsidePickupWindow. Deliberate
+    # deviation from MASTER_VISION's strict ±15min — see Session 9 notes
+    # in PROGRESS.md for rationale.
+    PICKUP_GRACE_BEFORE_START_SECONDS = 60 * 60
+    PICKUP_GRACE_AFTER_END_SECONDS = 15 * 60
+
     def is_within_consumer_cancel_window(self, *, now=None) -> bool:
         from datetime import timedelta
 
@@ -133,6 +159,24 @@ class Order(UUIDPrimaryKeyModel, TimestampedModel):
             seconds=self.CONSUMER_CANCEL_LEAD_TIME_SECONDS
         )
         return now <= cutoff
+
+    def is_within_pickup_window(self, *, now=None) -> bool:
+        from datetime import timedelta
+
+        from django.utils import timezone as _tz
+
+        now = now or _tz.now()
+        early_cutoff = self.bag.pickup_window_start - timedelta(
+            seconds=self.PICKUP_GRACE_BEFORE_START_SECONDS
+        )
+        late_cutoff = self.bag.pickup_window_end + timedelta(
+            seconds=self.PICKUP_GRACE_AFTER_END_SECONDS
+        )
+        return early_cutoff <= now <= late_cutoff
+
+    @property
+    def is_pin_locked(self) -> bool:
+        return self.pin_locked_at is not None
 
     @property
     def is_terminal(self) -> bool:

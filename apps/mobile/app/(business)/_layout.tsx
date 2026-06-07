@@ -12,7 +12,9 @@ export default function BusinessLayout() {
         contentStyle: { backgroundColor: theme.colors.background },
       }}
     >
-      <Stack.Screen name="index" options={{ title: 'Mi negocio' }} />
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="orders/[id]" options={{ title: 'Pedido' }} />
+      <Stack.Screen name="orders/scan" options={{ title: 'Escanear QR', presentation: 'modal' }} />
     </Stack>
   );
 }
