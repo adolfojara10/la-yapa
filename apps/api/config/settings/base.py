@@ -208,6 +208,7 @@ PAYPHONE_API_KEY = env("PAYPHONE_API_KEY", default="")
 PAYPHONE_SECRET = env("PAYPHONE_SECRET", default="")
 PAYPHONE_WEBHOOK_SECRET = env("PAYPHONE_WEBHOOK_SECRET", default="")
 PAYPHONE_BASE_URL = env("PAYPHONE_BASE_URL", default="https://pay.payphonetodoesposible.com")
+FAKE_PAYMENT_BASE_URL = env("FAKE_PAYMENT_BASE_URL", default="http://10.0.2.2:8000")
 
 DEUNA_PUBLIC_KEY = env("DEUNA_PUBLIC_KEY", default="")
 DEUNA_SECRET_KEY = env("DEUNA_SECRET_KEY", default="")

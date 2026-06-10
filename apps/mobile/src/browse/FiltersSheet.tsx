@@ -1,11 +1,17 @@
 /**
  * Filters bottom sheet — wraps the whole filter UI and binds it to the
- * filter store. Tap "Aplicar" closes the sheet; the list automatically
- * refetches because the store change invalidates the queryKey.
+ * filter store. Tap "Aplicar" refetches the bag list immediately and then
+ * closes the sheet.
  */
-import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { forwardRef, useImperativeHandle, useMemo, useRef } from 'react';
+import BottomSheet, {
+  BottomSheetFooter,
+  BottomSheetScrollView,
+  type BottomSheetFooterProps,
+} from '@gorhom/bottom-sheet';
+import { useQueryClient } from '@tanstack/react-query';
+import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/Button';
 import { Text } from '@/components/ui/Text';
@@ -65,6 +71,8 @@ const SORT_OPTIONS: { key: BagSort; label: string }[] = [
 export const FiltersSheet = forwardRef<FiltersSheetHandle, object>(
   function FiltersSheet(_props, ref) {
     const { theme } = useTheme();
+    const insets = useSafeAreaInsets();
+    const queryClient = useQueryClient();
     const sheetRef = useRef<BottomSheet>(null);
     const snapPoints = useMemo(() => ['85%'], []);
 
@@ -75,6 +83,33 @@ export const FiltersSheet = forwardRef<FiltersSheetHandle, object>(
       close: () => sheetRef.current?.close(),
     }));
 
+    const applyFilters = useCallback(() => {
+      void queryClient.invalidateQueries({ queryKey: ['bags', 'list'] });
+      sheetRef.current?.close();
+    }, [queryClient]);
+
+    const renderFooter = useCallback(
+      (props: BottomSheetFooterProps) => (
+        <BottomSheetFooter {...props} bottomInset={insets.bottom}>
+          <View
+            style={[
+              styles.footer,
+              theme.shadows.sm.rn,
+              {
+                backgroundColor: theme.colors.surfaceMuted,
+                borderTopColor: theme.colors.borderStrong,
+              },
+            ]}
+          >
+            <Button variant="primary" size="lg" fullWidth onPress={applyFilters}>
+              Aplicar
+            </Button>
+          </View>
+        </BottomSheetFooter>
+      ),
+      [applyFilters, insets.bottom, theme],
+    );
+
     return (
       <BottomSheet
         ref={sheetRef}
@@ -83,17 +118,21 @@ export const FiltersSheet = forwardRef<FiltersSheetHandle, object>(
         enablePanDownToClose
         backgroundStyle={{ backgroundColor: theme.colors.surface }}
         handleIndicatorStyle={{ backgroundColor: theme.colors.border }}
+        footerComponent={renderFooter}
       >
         <BottomSheetScrollView contentContainerStyle={styles.content}>
           <View style={styles.headerRow}>
             <Text variant="h3" style={{ color: theme.colors.text }}>
               Filtros
             </Text>
-            <Pressable onPress={store.reset} hitSlop={8}>
-              <Text variant="small" style={{ color: theme.colors.primary, fontWeight: '600' }}>
+            <View style={styles.headerActions}>
+              <Button variant="ghost" size="sm" onPress={store.reset}>
                 Limpiar
-              </Text>
-            </Pressable>
+              </Button>
+              <Button variant="secondary" size="sm" onPress={applyFilters}>
+                Aplicar
+              </Button>
+            </View>
           </View>
 
           <FilterSection label="Preferencias" theme={theme}>
@@ -151,17 +190,6 @@ export const FiltersSheet = forwardRef<FiltersSheetHandle, object>(
             />
           </FilterSection>
         </BottomSheetScrollView>
-
-        <View
-          style={[
-            styles.footer,
-            { backgroundColor: theme.colors.surface, borderTopColor: theme.colors.border },
-          ]}
-        >
-          <Button variant="primary" size="lg" fullWidth onPress={() => sheetRef.current?.close()}>
-            Aplicar
-          </Button>
-        </View>
       </BottomSheet>
     );
   },
@@ -232,22 +260,21 @@ function ChipRow({ options, isActive, onToggle, activeTone = 'primary' }: ChipRo
 }
 
 const styles = StyleSheet.create({
-  content: { padding: 16, paddingBottom: 120, gap: 8 },
+  content: { padding: 16, paddingBottom: 140, gap: 8 },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
   },
+  headerActions: { flexDirection: 'row', gap: 8 },
   section: { marginVertical: 8 },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: { paddingVertical: 8, paddingHorizontal: 14, borderWidth: 1.5 },
   footer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 16,
     borderTopWidth: 1,
   },
 });

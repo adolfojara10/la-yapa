@@ -38,10 +38,14 @@ export function useUserLocation(): {
         return;
       }
     }
-    const pos = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.Balanced,
-    });
-    setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude, source: 'device' });
+    try {
+      const pos = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude, source: 'device' });
+    } catch (err) {
+      setPermissionDenied(true);
+    }
   }
 
   useEffect(() => {

@@ -58,15 +58,32 @@ def test_dispatch_general_pool_creates_claim(authed, business_owner, location):
 
 
 @pytest.mark.django_db
-def test_dispatch_general_pool_requires_location_id(authed):
+def test_dispatch_general_pool_without_location_uses_only_owned_location(authed, location):
     donation = SuspendedMealDonationFactory(bag=None)
     response = authed.post(
         reverse("v1:business:suspended-dispatch"),
         {"donation_id": str(donation.id)},
         format="json",
     )
-    assert response.status_code == 404
-    assert response.json()["code"] == "not_your_location"
+    assert response.status_code == 200
+    donation.refresh_from_db()
+    assert donation.claimed_by_business_id == location.id
+
+
+@pytest.mark.django_db
+def test_dispatch_general_pool_requires_location_when_owner_has_multiple_locations(
+    authed, business
+):
+    from apps.businesses.factories import BusinessLocationFactory
+
+    BusinessLocationFactory(business=business, name="Sucursal Norte")
+    donation = SuspendedMealDonationFactory(bag=None)
+    response = authed.post(
+        reverse("v1:business:suspended-dispatch"),
+        {"donation_id": str(donation.id)},
+        format="json",
+    )
+    assert response.status_code == 200
 
 
 @pytest.mark.django_db

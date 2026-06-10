@@ -7,7 +7,8 @@
  */
 import { Image } from 'expo-image';
 import { Heart } from 'lucide-react-native';
-import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { favoritesApi } from '@/api';
@@ -39,8 +40,14 @@ export function BagCard({ bag, onPress }: Props) {
   const { theme } = useTheme();
   const [favorited, setFavorited] = useState(bag.is_favorited);
   const [busy, setBusy] = useState(false);
+  const queryClient = useQueryClient();
 
-  async function handleHeart() {
+  useEffect(() => {
+    setFavorited(bag.is_favorited);
+  }, [bag.is_favorited]);
+
+  async function handleHeart(e?: any) {
+    e?.stopPropagation?.();
     if (busy) return;
     const next = !favorited;
     setFavorited(next); // optimistic
@@ -48,6 +55,7 @@ export function BagCard({ bag, onPress }: Props) {
     try {
       const result = await favoritesApi.toggleFavorite(bag.business.location_id);
       setFavorited(result.favorited);
+      void queryClient.invalidateQueries({ queryKey: ['bags'] });
     } catch {
       setFavorited(!next); // rollback
     } finally {
@@ -76,7 +84,7 @@ export function BagCard({ bag, onPress }: Props) {
           source={bag.image_url ? { uri: bag.image_url } : null}
           style={styles.image}
           contentFit="cover"
-          placeholder="LEHV6nWB2yk8pyo0adR*.7kCMdnj"
+          placeholder={{ blurhash: 'LEHV6nWB2yk8pyo0adR*.7kCMdnj' }}
           transition={200}
         />
         <View

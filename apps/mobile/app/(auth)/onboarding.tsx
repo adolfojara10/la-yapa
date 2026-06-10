@@ -31,8 +31,6 @@ const DIETARY_OPTIONS = [
   { key: 'gluten_free', label: 'Sin gluten' },
   { key: 'sin_lactosa', label: 'Sin lactosa' },
   { key: 'organico', label: 'Orgánico' },
-  { key: 'halal', label: 'Halal' },
-  { key: 'kosher', label: 'Kosher' },
 ];
 
 type Step = 0 | 1 | 2 | 3;
@@ -62,8 +60,12 @@ export default function OnboardingScreen() {
       return;
     }
     setLocationDenied(false);
-    const pos = await Location.getCurrentPositionAsync({});
-    setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+    try {
+      const pos = await Location.getCurrentPositionAsync({});
+      setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+    } catch (err) {
+      setLocationDenied(true);
+    }
   }
 
   function toggleDietary(key: string) {
@@ -79,7 +81,7 @@ export default function OnboardingScreen() {
         first_name: firstName.trim(),
         language,
         default_location: location,
-        dietary_preferences: dietary.length > 0 ? dietary : ['vegetarian'],
+        dietary_preferences: dietary,
       });
       await refreshMe();
       // Routing guard now sees onboarding_completed=true and pushes to (consumer).
@@ -92,7 +94,6 @@ export default function OnboardingScreen() {
 
   function canAdvance(): boolean {
     if (step === 0) return firstName.trim().length > 0;
-    if (step === 3) return dietary.length > 0;
     return true;
   }
 
@@ -197,7 +198,7 @@ export default function OnboardingScreen() {
               Preferencias
             </Text>
             <Text variant="body" style={{ color: theme.colors.textMuted, marginTop: 8 }}>
-              Elige al menos una para personalizar tu feed.
+              Elige tus preferencias para personalizar tu feed (Opcional).
             </Text>
             <View style={styles.chipRow}>
               {DIETARY_OPTIONS.map((opt) => {

@@ -1,4 +1,4 @@
-import { Link } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -8,6 +8,8 @@ import { useTheme } from '@/theme';
 
 export default function WelcomeScreen() {
   const { theme } = useTheme();
+  const router = useRouter();
+
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.background }]}>
       <View style={styles.hero}>
@@ -23,16 +25,22 @@ export default function WelcomeScreen() {
       </View>
 
       <View style={styles.actions}>
-        <Link href="/(auth)/register" asChild>
-          <Button variant="primary" size="lg" fullWidth>
-            Crear cuenta
-          </Button>
-        </Link>
-        <Link href="/(auth)/login" asChild>
-          <Button variant="ghost" size="lg" fullWidth>
-            Ya tengo cuenta
-          </Button>
-        </Link>
+        <Button
+          variant="primary"
+          size="lg"
+          fullWidth
+          onPress={() => router.push('/(auth)/register')}
+        >
+          Crear cuenta
+        </Button>
+        <Button
+          variant="secondary"
+          size="lg"
+          fullWidth
+          onPress={() => router.push('/(auth)/login')}
+        >
+          Ya tengo cuenta
+        </Button>
       </View>
     </SafeAreaView>
   );

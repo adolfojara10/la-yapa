@@ -94,3 +94,66 @@ class PayPhoneWebhookView(_WebhookView):
 
 class DeUnaWebhookView(_WebhookView):
     provider_name = "de_una"
+
+class FakeCheckoutView(APIView):
+    """Local dev view: interactive UI to simulate fake payment success/failure."""
+    permission_classes = [AllowAny]
+    authentication_classes: list = []
+
+    def get(self, request, tx_id):
+        from django.http import HttpResponse, HttpResponseRedirect
+        from urllib.parse import urlencode
+        
+        return_url = request.query_params.get("return", "")
+        status_val = request.query_params.get("status", "")
+
+        if status_val:
+            if status_val in ("success", "failure"):
+                from apps.payments.models import PaymentTransaction
+                import uuid
+                import json
+                from apps.payments.providers.fake import FakePaymentProvider
+                from django.test import RequestFactory
+                from apps.payments.webhooks import handle_webhook_request
+
+                try:
+                    tx = PaymentTransaction.objects.get(provider_transaction_id=tx_id)
+                    event_type = "payment.succeeded" if status_val == "success" else "payment.failed"
+                    payload = {
+                        "id": f"evt-{uuid.uuid4().hex[:8]}",
+                        "type": event_type,
+                        "transaction_id": tx_id,
+                        "amount": str(tx.amount),
+                    }
+                    body = json.dumps(payload).encode("utf-8")
+                    headers = FakePaymentProvider.sign(payload)
+                    
+                    rf = RequestFactory()
+                    mock_request = rf.post("/api/v1/payments/fake/webhook", data=body, content_type="application/json")
+                    for k, v in headers.items():
+                        mock_request.META[f"HTTP_{k.upper().replace('-', '_')}"] = v
+                    
+                    handle_webhook_request(provider_name=tx.provider, request=mock_request)
+                except Exception:
+                    logger.exception("Failed to dispatch fake webhook")
+            
+            response = HttpResponse("", status=302)
+            response["Location"] = return_url
+            return response
+
+        success_url = f"{request.path}?{urlencode({'return': return_url, 'status': 'success'})}"
+        fail_url = f"{request.path}?{urlencode({'return': return_url, 'status': 'failure'})}"
+
+        html = f"""
+        <html>
+        <head><meta name="viewport" content="width=device-width, initial-scale=1"></head>
+        <body style="font-family: sans-serif; text-align: center; margin-top: 50px; padding: 20px;">
+            <h2>Fake Payment Checkout</h2>
+            <p>Transaction: <code>{tx_id}</code></p>
+            <p>Click below to simulate the provider webhook.</p>
+            <a href="{success_url}" style="display: block; padding: 15px; background: #16a34a; color: white; font-size: 18px; text-decoration: none; border-radius: 8px; width: 100%; margin-bottom: 20px; box-sizing: border-box;">Simulate Success</a>
+            <a href="{fail_url}" style="display: block; padding: 15px; background: #dc2626; color: white; font-size: 18px; text-decoration: none; border-radius: 8px; width: 100%; box-sizing: border-box;">Simulate Failure</a>
+        </body>
+        </html>
+        """
+        return HttpResponse(html)

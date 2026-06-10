@@ -122,3 +122,5 @@ Thumbs.db
 # ---------- Misc ----------
 *.pem
 .husky/_/
+
+logs/

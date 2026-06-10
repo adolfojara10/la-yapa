@@ -11,6 +11,7 @@ deterministically without env shenanigans.
 
 from __future__ import annotations
 
+from django.conf import settings
 import hashlib
 import hmac
 import json
@@ -44,7 +45,7 @@ class FakePaymentProvider(PaymentProviderBase):
             session_id=f"fake-session-{uuid.uuid4().hex[:8]}",
             provider_transaction_id=tx_id,
             amount=order.total_paid,
-            webview_url=f"https://fake.layapa.test/checkout/{tx_id}?return={return_url}",
+            webview_url=f"{settings.FAKE_PAYMENT_BASE_URL}/api/v1/payments/fake/checkout/{tx_id}?return={return_url}",
             sdk_payload={},
         )
 

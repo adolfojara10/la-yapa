@@ -18,6 +18,7 @@ export interface BagListParams {
   sort?: BagSort;
   cursor?: string;
   page_size?: number;
+  is_favorited?: boolean;
 }
 
 export interface CursorPage<T> {

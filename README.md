@@ -209,6 +209,32 @@ pnpm dev
 > source apps/api/.venv/bin/activate && pnpm dev
 > ```
 
+## 🏃 Quick Start / Daily Workflow
+
+Once you've done the first-time setup, here is what you need to run every day to develop:
+
+**Terminal 1: Start Databases & Services**
+
+```bash
+docker compose up
+```
+
+**Terminal 2: Start Django API + Web Admin + Mobile Metro Server**
+
+```bash
+source apps/api/.venv/bin/activate
+pnpm dev
+```
+
+**Terminal 3: Launch Mobile App on Emulator**
+Open Android Studio, start your emulator, then run:
+
+```bash
+pnpm --filter @layapa/mobile exec expo run:android --device
+```
+
+_(After the first time it compiles, you can just press `a` in Terminal 2 instead of running Terminal 3 again)._
+
 ---
 
 ## 📱 Mobile dev workflow (Android)
@@ -363,6 +389,10 @@ Re-run `expo run:android` **only** after changing native config:
 For 99% of work (JS, React components, screens, styles, business logic) you
 **do not** rebuild — just reload the JS bundle.
 
+> 🗺️ **Mapbox Warning:** To compile the Android app with the map features, you **MUST** export a Mapbox Secret Token with `downloads:read` scope before running the build command:
+> `export MAPBOX_DOWNLOAD_TOKEN="sk.your_token..."`
+> If you do not have a Mapbox token, the build will fail with `Could not find com.mapbox.maps`. You can temporarily remove `@rnmapbox/maps` from `package.json` and `app.json` to bypass this while developing other features.
+
 ---
 
 ### 4. Daily inner loop
@@ -440,6 +470,16 @@ pnpm --filter @layapa/mobile test
 # Admin
 pnpm --filter @layapa/admin test
 ```
+
+### ✉️ Testing Emails Locally (MailHog)
+
+In the development environment, no actual emails are sent to the outside world. Instead, the backend routes all outgoing emails (including verification codes, password resets, and order receipts) into **MailHog**.
+
+To view intercepted emails:
+
+1. Ensure your Docker services are running (`docker compose up`).
+2. Open your browser and go to **[http://localhost:8025](http://localhost:8025)**.
+3. You will see the MailHog web interface with your verification emails and OTP codes sitting in the inbox.
 
 ---
 

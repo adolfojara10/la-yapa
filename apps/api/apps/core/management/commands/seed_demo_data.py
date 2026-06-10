@@ -108,7 +108,8 @@ class Command(BaseCommand):
         self.stdout.write(
             self.style.MIGRATE_HEADING("Test credentials (password for all: test-pass-123):")
         )
-        self.stdout.write("  Business owner:   owner@layapa.test")
+        self.stdout.write("  Business owner 1: owner@layapa.test  (Panadería La Esperanza)")
+        self.stdout.write("  Business owner 2: owner2@layapa.test (Pizzería Bella Napoli)")
         self.stdout.write("  Consumer #1:      sofia@layapa.test")
         self.stdout.write("  Consumer #2:      camila@layapa.test")
         self.stdout.write("  Consumer #3:      matias@layapa.test")
@@ -224,6 +225,12 @@ class Command(BaseCommand):
             username="owner",
             is_email_verified=True,
         )
+        
+        known_owner_2 = BusinessOwnerFactory(
+            email="owner2@layapa.test",
+            username="owner2",
+            is_email_verified=True,
+        )
 
         names = [
             ("Panadería La Esperanza", BusinessType.BAKERY, known_owner),
@@ -231,6 +238,11 @@ class Command(BaseCommand):
             ("Supermercado Andino", BusinessType.SUPERMARKET, None),
             ("Hotel Cuenca Real", BusinessType.HOTEL, None),
             ("Mercado 10 de Agosto · Puesto 42", BusinessType.MERCADO, None),
+            ("Cafetería El Centro", BusinessType.RESTAURANT, None),
+            ("Frutería Doña Rosa", BusinessType.MERCADO, None),
+            ("Pizzería Bella Napoli", BusinessType.RESTAURANT, known_owner_2),
+            ("Empanadas de la Abuela", BusinessType.BAKERY, None),
+            ("Minimarket La Esquina", BusinessType.SUPERMARKET, None),
         ]
         businesses = []
         for name, btype, owner in names:
@@ -253,24 +265,34 @@ class Command(BaseCommand):
             "https://images.unsplash.com/photo-1502741338009-cac2772e18bc?w=800",  # pastel
             "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800",  # bowl
             "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800",  # pizza
+            "https://images.unsplash.com/photo-1495147466023-ce5a1eb757db?w=800",  # bakery
+            "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800",  # roast meat
+            "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800",  # burger
+            "https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=800",  # salad
+            "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=800",  # tacos
+            "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=800",  # healthy
         ]
         dietary_pool = list(DietaryTag.objects.all())
         allergen_pool = list(AllergenTag.objects.all())
 
         # 6 pickup-window buckets so consumer filters (today/tomorrow/this_week)
-        # have non-empty results in dev.
-        window_offsets_hours = [2, 5, 24, 30, 48, 96]
+        # have non-empty results in dev. Also add past windows.
+        window_offsets_hours = [-48, -24, -2, -1, 0, 2, 5, 24, 30, 48, 96]
         prices = [
             (Decimal("12.00"), Decimal("4.50")),
             (Decimal("10.00"), Decimal("3.00")),
             (Decimal("18.00"), Decimal("6.50")),
             (Decimal("8.00"), Decimal("2.50")),
+            (Decimal("15.00"), Decimal("5.00")),
+            (Decimal("5.00"), Decimal("1.50")),
         ]
 
         bag_index = 0
+        import random
         for biz_index, biz in enumerate(businesses):
             loc = biz.locations.first()
-            for i in range(4):
+            num_bags = 3 if biz_index >= 5 else 4
+            for i in range(num_bags):
                 start = timezone.now() + timedelta(
                     hours=window_offsets_hours[(bag_index) % len(window_offsets_hours)]
                 )

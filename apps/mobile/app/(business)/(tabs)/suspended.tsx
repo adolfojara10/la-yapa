@@ -180,7 +180,7 @@ export default function SuspendedTab() {
             loading={submitting}
             onPress={handleDispatch}
           >
-            Confirmar dispatch
+            Despachar
           </Button>
         </BottomSheetView>
       </BottomSheet>

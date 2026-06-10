@@ -96,6 +96,11 @@ def apply_filters(qs: QuerySet, params: dict[str, Any]) -> QuerySet:
     if dietary or q:
         qs = qs.distinct()
 
+    # Filter by user's favorites
+    is_favorited_param = str(params.get("is_favorited", "")).lower()
+    if is_favorited_param == "true":
+        qs = qs.filter(is_favorited=True)
+
     return qs
 
 

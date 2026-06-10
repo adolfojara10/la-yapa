@@ -30,12 +30,7 @@
       "expo-asset",
       "expo-secure-store",
       "expo-apple-authentication",
-      [
-        "@rnmapbox/maps",
-        {
-          "RNMapboxMapsDownloadToken": ""
-        }
-      ],
+
       [
         "expo-location",
         {

@@ -18,7 +18,28 @@ export interface UseInfiniteBagsOptions {
 }
 
 export function useInfiniteBags({ location }: UseInfiniteBagsOptions) {
-  const filters = useFilterStore((s) => s.toApiParams());
+  const dietary = useFilterStore((s) => s.dietary);
+  const excludeAllergens = useFilterStore((s) => s.excludeAllergens);
+  const minPrice = useFilterStore((s) => s.minPrice);
+  const maxPrice = useFilterStore((s) => s.maxPrice);
+  const pickupWindow = useFilterStore((s) => s.pickupWindow);
+  const distanceKm = useFilterStore((s) => s.distanceKm);
+  const minRating = useFilterStore((s) => s.minRating);
+  const sort = useFilterStore((s) => s.sort);
+  const q = useFilterStore((s) => s.q);
+
+  const filters: BagListParams = {
+    radius_km: distanceKm,
+    sort,
+    ...(dietary.length > 0 ? { dietary } : {}),
+    ...(excludeAllergens.length > 0 ? { exclude_allergens: excludeAllergens } : {}),
+    ...(minPrice !== null ? { min_price: minPrice } : {}),
+    ...(maxPrice !== null ? { max_price: maxPrice } : {}),
+    ...(pickupWindow !== null ? { pickup_window: pickupWindow } : {}),
+    ...(minRating > 0 ? { min_rating: minRating } : {}),
+    ...(q.trim() ? { q: q.trim() } : {}),
+  };
+
   const params: BagListParams = {
     ...filters,
     ...(location ? { lat: location.lat, lng: location.lng } : {}),

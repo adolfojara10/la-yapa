@@ -42,7 +42,7 @@ class DonationNotAvailable(DispatchError):
 
 class NotYourLocation(DispatchError):
     """Donation's bag belongs to a business this user doesn't own, and the
-    request didn't supply a valid business_location_id either."""
+    request supplied an invalid business_location_id."""
 
     code = "not_your_location"
 
@@ -56,7 +56,9 @@ class DispatchRateLimitExceeded(DispatchError):
 
 def _owned_location_ids(business_owner) -> list[int]:
     return list(
-        BusinessLocation.objects.filter(business__owner=business_owner).values_list("id", flat=True)
+        BusinessLocation.objects.filter(business__owner=business_owner)
+        .order_by("id")
+        .values_list("id", flat=True)
     )
 
 
@@ -73,9 +75,9 @@ def dispatch_donation(
     Routing rules:
       - If donation has `bag` set → must be served at that bag's location,
         and `business_location_id` (if supplied) must match.
-      - If donation is general-pool (bag=None) → caller MUST supply
-        `business_location_id`, and that location must be owned by the
-        requester.
+      - If donation is general-pool (bag=None) → `business_location_id`
+        is optional. If omitted, we default to the requester's first
+        owned location (ordered by id).
 
     Always sends anonymous push to the donor (regardless of bag/general-pool).
     """
@@ -86,7 +88,6 @@ def dispatch_donation(
     try:
         donation = (
             SuspendedMealDonation.objects.select_for_update()
-            .select_related("bag__business_location", "donor")
             .get(pk=donation_id)
         )
     except (SuspendedMealDonation.DoesNotExist, ValueError):
@@ -104,10 +105,11 @@ def dispatch_donation(
             raise NotYourLocation()
     else:
         if business_location_id is None:
-            raise NotYourLocation()
-        if business_location_id not in owned_location_ids:
-            raise NotYourLocation()
-        target_location_id = business_location_id
+            target_location_id = owned_location_ids[0]
+        else:
+            if business_location_id not in owned_location_ids:
+                raise NotYourLocation()
+            target_location_id = business_location_id
 
     # Rate-limit: max 5 dispatches per location per rolling 24h.
     recent_claims = SuspendedMealClaim.objects.filter(
