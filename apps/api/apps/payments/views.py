@@ -117,7 +117,9 @@ class FakeCheckoutView(APIView):
             if status_val in ("success", "failure"):
                 try:
                     tx = PaymentTransaction.objects.get(provider_transaction_id=tx_id)
-                    event_type = "payment.succeeded" if status_val == "success" else "payment.failed"
+                    event_type = (
+                        "payment.succeeded" if status_val == "success" else "payment.failed"
+                    )
                     payload = {
                         "id": f"evt-{uuid.uuid4().hex[:8]}",
                         "type": event_type,

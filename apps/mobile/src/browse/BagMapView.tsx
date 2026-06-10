@@ -9,7 +9,7 @@ interface Props {
   location: { lat: number; lng: number } | null;
 }
 
-export function BagMapView({ location }: Props) {
+export function BagMapView({ location: _location }: Props) {
   const { theme } = useTheme();
 
   return (

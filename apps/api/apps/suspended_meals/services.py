@@ -86,10 +86,7 @@ def dispatch_donation(
         raise NotYourLocation()
 
     try:
-        donation = (
-            SuspendedMealDonation.objects.select_for_update()
-            .get(pk=donation_id)
-        )
+        donation = SuspendedMealDonation.objects.select_for_update().get(pk=donation_id)
     except (SuspendedMealDonation.DoesNotExist, ValueError):
         raise DonationNotAvailable() from None
 
