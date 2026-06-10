@@ -225,7 +225,7 @@ class Command(BaseCommand):
             username="owner",
             is_email_verified=True,
         )
-        
+
         known_owner_2 = BusinessOwnerFactory(
             email="owner2@layapa.test",
             username="owner2",
@@ -288,7 +288,6 @@ class Command(BaseCommand):
         ]
 
         bag_index = 0
-        import random
         for biz_index, biz in enumerate(businesses):
             loc = biz.locations.first()
             num_bags = 3 if biz_index >= 5 else 4

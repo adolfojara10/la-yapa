@@ -63,7 +63,7 @@ export default function OnboardingScreen() {
     try {
       const pos = await Location.getCurrentPositionAsync({});
       setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-    } catch (err) {
+    } catch {
       setLocationDenied(true);
     }
   }

@@ -43,7 +43,7 @@ export function useUserLocation(): {
         accuracy: Location.Accuracy.Balanced,
       });
       setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude, source: 'device' });
-    } catch (err) {
+    } catch {
       setPermissionDenied(true);
     }
   }

@@ -11,13 +11,14 @@ deterministically without env shenanigans.
 
 from __future__ import annotations
 
-from django.conf import settings
 import hashlib
 import hmac
 import json
 import time
 import uuid
 from decimal import Decimal
+
+from django.conf import settings
 
 from .base import ChargeSession, PaymentProviderBase, RefundResult, WebhookEvent
 from .exceptions import SignatureInvalidError
