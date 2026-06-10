@@ -133,8 +133,11 @@ class ConsumerProfile(TimestampedModel):
     @property
     def onboarding_completed(self) -> bool:
         """A consumer has finished onboarding once they've given us a first
-        name."""
-        return bool(self.first_name)
+        name AND picked at least one dietary preference. Location permission
+        is tracked client-side (we just record default_location if granted)."""
+        if not self.first_name:
+            return False
+        return self.dietary_preferences.exists()
 
 
 class EmailVerificationCode(TimestampedModel):

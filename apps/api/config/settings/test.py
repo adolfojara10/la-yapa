@@ -19,6 +19,7 @@ RATELIMIT_ENABLE = False
 
 # Payment provider: always use the deterministic fake in tests.
 USE_FAKE_PAYMENT_PROVIDER = True
+FAKE_PAYMENT_BASE_URL = "https://fake.layapa.test"
 PAYPHONE_WEBHOOK_SECRET = "test-payphone-webhook-secret"
 DEUNA_WEBHOOK_SECRET = "test-deuna-webhook-secret"
 

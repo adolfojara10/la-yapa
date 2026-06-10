@@ -1,4 +1,5 @@
 import { render } from '@testing-library/react-native';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import { BagCard } from '@/browse/BagCard';
 import { ThemeProvider } from '@/theme';
@@ -34,7 +35,17 @@ const bag: BagListItem = {
 };
 
 function wrap(node: React.ReactElement) {
-  return <ThemeProvider>{node}</ThemeProvider>;
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>{node}</ThemeProvider>
+    </QueryClientProvider>
+  );
 }
 
 describe('BagCard', () => {
