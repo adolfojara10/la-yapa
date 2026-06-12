@@ -13,10 +13,16 @@ describe('businessApi', () => {
     __resetClientForTests();
     calls = [];
     apiClient.defaults.adapter = (async (config: import('axios').InternalAxiosRequestConfig) => {
+      const payload =
+        typeof config.data === 'string'
+          ? JSON.parse(config.data as string)
+          : config.data instanceof FormData
+            ? 'form-data'
+            : undefined;
       calls.push({
         method: (config.method ?? 'get').toLowerCase(),
         url: config.url ?? '',
-        data: config.data ? JSON.parse(config.data as string) : undefined,
+        data: payload,
       });
       return {
         data: [],
@@ -70,5 +76,38 @@ describe('businessApi', () => {
       url: '/business/suspended-meals/dispatch',
       data: { donation_id: 'd1', business_location_id: 2, notes: 'cliente recurrente' },
     });
+  });
+
+  it('submitOnboarding → POST multipart to onboarding endpoint', async () => {
+    await businessApi.submitOnboarding({
+      name: 'Pan del dia',
+      business_type: 'bakery',
+      tier: 'formal',
+      location_name: 'Centro',
+      address: 'Calle Larga',
+      lat: -2.9,
+      lng: -79,
+      payout_method: 'bank_transfer',
+      account_holder: 'Maria',
+      bank_name: 'Pichincha',
+      account_number: '123',
+      cedula_number: '0102030405',
+      food_safety_terms_accepted: true,
+    });
+    expect(calls[0]).toEqual({ method: 'post', url: '/business/onboarding', data: 'form-data' });
+  });
+
+  it('createBag → POST multipart to bags endpoint', async () => {
+    await businessApi.createBag({
+      business_location_id: 1,
+      type: 'surprise',
+      title: 'Pan sorpresa',
+      original_price: '9.00',
+      sale_price: '3.00',
+      quantity_available: 5,
+      pickup_window_start: '2026-06-12T18:00:00.000Z',
+      pickup_window_end: '2026-06-12T20:00:00.000Z',
+    });
+    expect(calls[0]).toEqual({ method: 'post', url: '/business/bags', data: 'form-data' });
   });
 });

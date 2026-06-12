@@ -291,6 +291,60 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
+CLOUDFLARE_R2_ACCESS_KEY = env("CLOUDFLARE_R2_ACCESS_KEY", default="")
+CLOUDFLARE_R2_SECRET_KEY = env("CLOUDFLARE_R2_SECRET_KEY", default="")
+CLOUDFLARE_R2_BUCKET = env("CLOUDFLARE_R2_BUCKET", default="")
+CLOUDFLARE_R2_ENDPOINT = env("CLOUDFLARE_R2_ENDPOINT", default="")
+CLOUDFLARE_R2_REGION = env("CLOUDFLARE_R2_REGION", default="auto")
+CLOUDFLARE_R2_PUBLIC_BASE_URL = env("CLOUDFLARE_R2_PUBLIC_BASE_URL", default="")
+
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
+if all(
+    [
+        CLOUDFLARE_R2_ACCESS_KEY,
+        CLOUDFLARE_R2_SECRET_KEY,
+        CLOUDFLARE_R2_BUCKET,
+        CLOUDFLARE_R2_ENDPOINT,
+    ]
+):
+    AWS_ACCESS_KEY_ID = CLOUDFLARE_R2_ACCESS_KEY
+    AWS_SECRET_ACCESS_KEY = CLOUDFLARE_R2_SECRET_KEY
+    AWS_STORAGE_BUCKET_NAME = CLOUDFLARE_R2_BUCKET
+    AWS_S3_REGION_NAME = CLOUDFLARE_R2_REGION
+    AWS_S3_ENDPOINT_URL = CLOUDFLARE_R2_ENDPOINT
+    AWS_QUERYSTRING_AUTH = False
+    AWS_DEFAULT_ACL = None
+    AWS_S3_FILE_OVERWRITE = False
+    AWS_S3_SIGNATURE_VERSION = "s3v4"
+    if CLOUDFLARE_R2_PUBLIC_BASE_URL:
+        AWS_S3_CUSTOM_DOMAIN = CLOUDFLARE_R2_PUBLIC_BASE_URL.removeprefix("https://").removeprefix(
+            "http://"
+        )
+
+    STORAGES["default"] = {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": {
+            "bucket_name": AWS_STORAGE_BUCKET_NAME,
+            "access_key": AWS_ACCESS_KEY_ID,
+            "secret_key": AWS_SECRET_ACCESS_KEY,
+            "endpoint_url": AWS_S3_ENDPOINT_URL,
+            "region_name": AWS_S3_REGION_NAME,
+            "default_acl": AWS_DEFAULT_ACL,
+            "querystring_auth": AWS_QUERYSTRING_AUTH,
+            "file_overwrite": AWS_S3_FILE_OVERWRITE,
+            "signature_version": AWS_S3_SIGNATURE_VERSION,
+            **({"custom_domain": AWS_S3_CUSTOM_DOMAIN} if CLOUDFLARE_R2_PUBLIC_BASE_URL else {}),
+        },
+    }
+
 # ---------- Default PK ----------
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

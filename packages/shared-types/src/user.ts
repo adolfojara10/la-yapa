@@ -1,3 +1,5 @@
+import type { BusinessSummary } from './business';
+
 export type UserRole = 'consumer' | 'business_owner' | 'admin' | 'sales_rep';
 
 export type Locale = 'es' | 'en';
@@ -29,6 +31,7 @@ export interface User {
   is_premium: boolean;
   premium_expires_at?: string | null;
   consumer_profile?: ConsumerProfile | null;
+  business_summary?: BusinessSummary | null;
   onboarding_completed: boolean;
   created_at: string;
   updated_at: string;

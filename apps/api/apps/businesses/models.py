@@ -99,6 +99,21 @@ class Business(TimestampedModel):
     def __str__(self) -> str:
         return self.name
 
+    @property
+    def is_food_business(self) -> bool:
+        return self.business_type in {
+            BusinessType.RESTAURANT,
+            BusinessType.BAKERY,
+            BusinessType.SUPERMARKET,
+            BusinessType.HOTEL,
+            BusinessType.MERCADO,
+            BusinessType.FARMER,
+        }
+
+    @property
+    def has_locations(self) -> bool:
+        return self.locations.filter(is_active=True).exists()
+
 
 class BusinessLocation(TimestampedModel):
     business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name="locations")

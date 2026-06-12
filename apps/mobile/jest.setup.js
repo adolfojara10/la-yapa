@@ -41,6 +41,21 @@ jest.mock('expo-location', () => ({
   getCurrentPositionAsync: jest.fn(),
   Accuracy: { Balanced: 3 },
 }));
+jest.mock('expo-image-picker', () => ({
+  requestMediaLibraryPermissionsAsync: jest.fn(async () => ({ granted: true })),
+  launchImageLibraryAsync: jest.fn(async () => ({ canceled: true, assets: [] })),
+  MediaTypeOptions: { Images: 'Images' },
+}));
+jest.mock('expo-document-picker', () => ({
+  getDocumentAsync: jest.fn(async () => ({ canceled: true, assets: [] })),
+}));
+jest.mock('@react-native-community/datetimepicker', () => {
+  const { View } = require('react-native');
+  return {
+    __esModule: true,
+    default: View,
+  };
+});
 
 // expo-camera: inert View + permission stub.
 jest.mock('expo-camera', () => {

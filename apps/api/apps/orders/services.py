@@ -20,6 +20,7 @@ from django.db.models import F
 from django.utils import timezone
 
 from apps.bags.models import Bag
+from apps.businesses.models import BusinessStatus
 
 from .models import CancelledBy, Order, OrderStatus
 from .state_machine import assert_can_transition
@@ -130,6 +131,8 @@ def create_order(
     now = timezone.now()
     if not bag.is_active:
         raise BagUnavailable("Bag is not active")
+    if bag.business_location.business.status != BusinessStatus.APPROVED:
+        raise BagUnavailable("Business is not approved")
     if bag.pickup_window_end <= now:
         raise BagUnavailable("Pickup window has closed")
     if bag.quantity_available < quantity:

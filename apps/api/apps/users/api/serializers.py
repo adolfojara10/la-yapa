@@ -5,6 +5,7 @@ from __future__ import annotations
 from django.db import transaction
 from rest_framework import serializers
 
+from apps.businesses.models import Business
 from apps.users.models import ConsumerProfile, DietaryTag, User
 
 
@@ -40,9 +41,28 @@ class ConsumerProfileSerializer(serializers.ModelSerializer):
         read_only_fields = ("referral_code", "onboarding_completed")
 
 
+class BusinessSummarySerializer(serializers.ModelSerializer):
+    has_locations = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = Business
+        fields = (
+            "id",
+            "name",
+            "business_type",
+            "tier",
+            "status",
+            "rejection_reason",
+            "payout_method",
+            "has_locations",
+        )
+        read_only_fields = fields
+
+
 class MeSerializer(serializers.ModelSerializer):
     consumer_profile = ConsumerProfileSerializer(read_only=True)
     onboarding_completed = serializers.SerializerMethodField()
+    business_summary = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -57,6 +77,7 @@ class MeSerializer(serializers.ModelSerializer):
             "is_premium",
             "premium_expires_at",
             "consumer_profile",
+            "business_summary",
             "onboarding_completed",
             "created_at",
             "updated_at",
@@ -70,18 +91,30 @@ class MeSerializer(serializers.ModelSerializer):
             "is_premium",
             "premium_expires_at",
             "consumer_profile",
+            "business_summary",
             "onboarding_completed",
             "created_at",
             "updated_at",
         )
 
     def get_onboarding_completed(self, obj: User) -> bool:
-        # Only consumers have an onboarding step today; business owners
-        # complete onboarding via the (future) business wizard.
+        if obj.role == User.Role.BUSINESS_OWNER:
+            return self._primary_business(obj) is not None
         if obj.role != User.Role.CONSUMER:
             return True
         profile = getattr(obj, "consumer_profile", None)
         return bool(profile and profile.onboarding_completed)
+
+    def get_business_summary(self, obj: User) -> dict | None:
+        if obj.role != User.Role.BUSINESS_OWNER:
+            return None
+        business = self._primary_business(obj)
+        if business is None:
+            return None
+        return BusinessSummarySerializer(business).data
+
+    def _primary_business(self, obj: User) -> Business | None:
+        return obj.businesses.order_by("created_at").first()
 
 
 class MeUpdateSerializer(serializers.Serializer):

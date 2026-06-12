@@ -82,7 +82,8 @@ def test_register_can_create_business_owner_without_profile(api_client):
     assert user.role == "business_owner"
     # Business owners don't get a ConsumerProfile — Business is created later via onboarding.
     assert not ConsumerProfile.objects.filter(user=user).exists()
-    assert response.json()["user"]["onboarding_completed"] is True
+    assert response.json()["user"]["onboarding_completed"] is False
+    assert response.json()["user"]["business_summary"] is None
 
 
 @pytest.mark.django_db

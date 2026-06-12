@@ -9,7 +9,7 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from apps.businesses.models import BusinessLocation
+from apps.businesses.models import Business, BusinessLocation, BusinessStatus
 from apps.core.models import TimestampedModel, UUIDPrimaryKeyModel
 from apps.users.models import DietaryTag
 
@@ -42,6 +42,7 @@ class BagQuerySet(models.QuerySet):
             is_active=True,
             quantity_available__gt=0,
             pickup_window_end__gt=now,
+            business_location__business__status=BusinessStatus.APPROVED,
         )
 
 
@@ -138,3 +139,57 @@ class Bag(UUIDPrimaryKeyModel, TimestampedModel):
             return 0
         ratio = (self.original_price - self.sale_price) / self.original_price
         return int((ratio * 100).quantize(Decimal("1")))
+
+
+class BagTemplate(UUIDPrimaryKeyModel, TimestampedModel):
+    """Reusable bag presets owned by a business."""
+
+    business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name="bag_templates")
+    name = models.CharField(max_length=140)
+    type = models.CharField(max_length=10, choices=BagType.choices, default=BagType.SURPRISE)
+    title = models.CharField(max_length=140)
+    description = models.TextField(blank=True)
+    image_url = models.URLField(blank=True)
+    original_price = models.DecimalField(max_digits=8, decimal_places=2)
+    sale_price = models.DecimalField(max_digits=8, decimal_places=2)
+    dietary_tags = models.ManyToManyField(DietaryTag, blank=True, related_name="bag_templates")
+    allergen_warnings = models.ManyToManyField(
+        AllergenTag,
+        blank=True,
+        related_name="bag_templates",
+    )
+    is_suspended_meal_eligible = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["name", "-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["business", "name"],
+                name="uniq_bag_template_name_per_business",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.name} @ {self.business.name}"
+
+    def clean(self) -> None:
+        super().clean()
+        errors: dict[str, str] = {}
+
+        if self.original_price is not None and self.sale_price is not None:
+            max_allowed = (Bag.MAX_DISCOUNT_RATIO * self.original_price).quantize(Decimal("0.01"))
+            if self.sale_price > max_allowed:
+                errors["sale_price"] = _(
+                    "Sale price must be at most 50%% of original price (max %(max).2f)."
+                ) % {"max": max_allowed}
+            if self.sale_price < Bag.MIN_SALE_PRICE:
+                errors["sale_price"] = _("Sale price must be at least %(min).2f.") % {
+                    "min": Bag.MIN_SALE_PRICE
+                }
+
+        if errors:
+            raise ValidationError(errors)
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)

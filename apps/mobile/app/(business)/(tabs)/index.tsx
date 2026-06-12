@@ -12,7 +12,7 @@
  * Below: active orders grouped chronologically. Tap a row → order detail.
  */
 import { useRouter } from 'expo-router';
-import { QrCode, KeyRound } from 'lucide-react-native';
+import { BarChart3, KeyRound, Plus, QrCode } from 'lucide-react-native';
 import { useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -43,6 +43,13 @@ function formatWindow(start: string, end: string): string {
   const fmt = (d: Date) =>
     d.toLocaleTimeString('es-EC', { hour: 'numeric', minute: '2-digit', hour12: false });
   return `${fmt(s)}–${fmt(e)}`;
+}
+
+function greetingForHour() {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Buenos dias';
+  if (hour < 19) return 'Buenas tardes';
+  return 'Buenas noches';
 }
 
 export default function BusinessDashboard() {
@@ -107,12 +114,12 @@ export default function BusinessDashboard() {
           <View>
             <View style={styles.header}>
               <Text variant="h2" style={{ color: theme.colors.text }}>
-                Tus pedidos de hoy
+                {greetingForHour()}, Yapi te acompana hoy
               </Text>
               {summary ? (
                 <Text variant="small" style={{ color: theme.colors.textMuted, marginTop: 4 }}>
-                  {summary.active_orders_count} activos · {summary.today_completed_count}{' '}
-                  completados
+                  {summary.today_orders_count} pedidos · ${summary.today_revenue} en ingresos ·{' '}
+                  {summary.today_bags_sold} bolsas vendidas
                   {summary.suspended_meals_available > 0
                     ? ` · ${summary.suspended_meals_available} suspendidas disponibles`
                     : ''}
@@ -126,10 +133,10 @@ export default function BusinessDashboard() {
                   variant="primary"
                   size="lg"
                   fullWidth
-                  leftIcon={<QrCode size={18} color={theme.colors.textInverse} />}
-                  onPress={() => router.push('/(business)/orders/scan')}
+                  leftIcon={<Plus size={18} color={theme.colors.textInverse} />}
+                  onPress={() => router.push('/(business)/bags/new')}
                 >
-                  Escanear QR
+                  Nueva bolsa
                 </Button>
               </View>
               <View style={{ flex: 1 }}>
@@ -137,10 +144,49 @@ export default function BusinessDashboard() {
                   variant="secondary"
                   size="lg"
                   fullWidth
+                  leftIcon={<QrCode size={18} color={theme.colors.textInverse} />}
+                  onPress={() => router.push('/(business)/orders')}
+                >
+                  Ver pedidos
+                </Button>
+              </View>
+            </View>
+
+            <View style={styles.actionsRow}>
+              <View style={{ flex: 1 }}>
+                <Button
+                  variant="ghost"
+                  size="lg"
+                  fullWidth
+                  leftIcon={<QrCode size={18} color={theme.colors.text} />}
+                  onPress={() => router.push('/(business)/orders/scan')}
+                >
+                  Escanear QR
+                </Button>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Button
+                  variant="ghost"
+                  size="lg"
+                  fullWidth
                   leftIcon={<KeyRound size={18} color={theme.colors.text} />}
                   onPress={() => pinSheetRef.current?.open(orders.data ?? [])}
                 >
                   Ingresar PIN
+                </Button>
+              </View>
+            </View>
+
+            <View style={styles.actionsRow}>
+              <View style={{ flex: 1 }}>
+                <Button
+                  variant="ghost"
+                  size="lg"
+                  fullWidth
+                  leftIcon={<BarChart3 size={18} color={theme.colors.text} />}
+                  onPress={() => router.push('/(business)/analytics')}
+                >
+                  Analytics
                 </Button>
               </View>
             </View>

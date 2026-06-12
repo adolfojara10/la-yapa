@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import AllergenTag, Bag
+from .models import AllergenTag, Bag, BagTemplate
 
 
 @admin.register(Bag)
@@ -27,3 +27,11 @@ class BagAdmin(admin.ModelAdmin):
 class AllergenTagAdmin(admin.ModelAdmin):
     list_display = ("name", "label_es", "label_en")
     search_fields = ("name", "label_es")
+
+
+@admin.register(BagTemplate)
+class BagTemplateAdmin(admin.ModelAdmin):
+    list_display = ("name", "business", "type", "sale_price", "original_price")
+    search_fields = ("name", "title", "business__name")
+    raw_id_fields = ("business",)
+    filter_horizontal = ("dietary_tags", "allergen_warnings")

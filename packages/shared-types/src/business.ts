@@ -18,7 +18,13 @@ import type { OrderStatus, PaymentMethod } from './order';
 
 export type BusinessType = 'restaurant' | 'bakery' | 'supermarket' | 'hotel' | 'mercado' | 'farmer';
 
+export type BusinessTier = 'formal' | 'informal';
+
 export type BusinessStatus = 'pending' | 'approved' | 'suspended' | 'rejected';
+
+export type PayoutFrequency = 'weekly' | 'monthly';
+
+export type PayoutMethod = 'bank_transfer' | 'de_una';
 
 export interface Business {
   id: number;
@@ -73,6 +79,158 @@ export interface BusinessDashboardSummary {
   active_orders_count: number;
   today_completed_count: number;
   suspended_meals_available: number;
+  today_orders_count: number;
+  today_revenue: string;
+  today_bags_sold: number;
+}
+
+export interface BusinessSummary {
+  id: number;
+  name: string;
+  business_type: BusinessType;
+  tier: BusinessTier;
+  status: BusinessStatus;
+  rejection_reason: string;
+  payout_method: PayoutMethod;
+  has_locations: boolean;
+}
+
+export interface BusinessLocation {
+  id: number;
+  name: string;
+  address: string;
+  lat: number | null;
+  lng: number | null;
+  phone: string;
+  is_active: boolean;
+  hours_of_operation: Record<string, string>;
+}
+
+export interface ManagedBag {
+  id: string;
+  business_location_id: number;
+  business_location_name: string;
+  type: 'surprise' | 'specific';
+  title: string;
+  description: string;
+  image_url: string;
+  original_price: string;
+  sale_price: string;
+  quantity_available: number;
+  quantity_total: number;
+  quantity_sold: number;
+  pickup_window_start: string;
+  pickup_window_end: string;
+  dietary_tags: string[];
+  allergen_warnings: string[];
+  is_active: boolean;
+  is_suspended_meal_eligible: boolean;
+  can_edit: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BagTemplate {
+  id: string;
+  name: string;
+  type: 'surprise' | 'specific';
+  title: string;
+  description: string;
+  image_url: string;
+  original_price: string;
+  sale_price: string;
+  dietary_tags: string[];
+  allergen_warnings: string[];
+  is_suspended_meal_eligible: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BusinessLocationPayload {
+  name: string;
+  address: string;
+  lat: number;
+  lng: number;
+  phone?: string;
+  is_active?: boolean;
+  hours_of_operation?: Record<string, string>;
+}
+
+export interface BusinessBagPayload {
+  business_location_id: number;
+  type: 'surprise' | 'specific';
+  title: string;
+  description?: string;
+  image?: UploadAsset;
+  original_price: string;
+  sale_price: string;
+  quantity_available: number;
+  pickup_window_start: string;
+  pickup_window_end: string;
+  dietary_tags?: string[];
+  allergen_warnings?: string[];
+  is_suspended_meal_eligible?: boolean;
+  is_active?: boolean;
+}
+
+export interface BusinessBagDuplicatePayload {
+  business_location_id?: number;
+  quantity_available?: number;
+  pickup_window_start?: string;
+  pickup_window_end?: string;
+}
+
+export interface BagTemplatePayload {
+  name: string;
+  type: 'surprise' | 'specific';
+  title: string;
+  description?: string;
+  image?: UploadAsset;
+  original_price: string;
+  sale_price: string;
+  dietary_tags?: string[];
+  allergen_warnings?: string[];
+  is_suspended_meal_eligible?: boolean;
+}
+
+export interface UploadAsset {
+  uri: string;
+  name: string;
+  type?: string | null;
+}
+
+export interface BusinessOnboardingPayload {
+  name: string;
+  business_type: BusinessType;
+  tier: BusinessTier;
+  description?: string;
+  phone?: string;
+  email?: string;
+  website?: string;
+  location_name: string;
+  address: string;
+  lat: number;
+  lng: number;
+  location_phone?: string;
+  hours_of_operation?: Record<string, string>;
+  payout_frequency?: PayoutFrequency;
+  payout_method: PayoutMethod;
+  account_holder: string;
+  bank_name?: string;
+  account_number?: string;
+  account_type?: string;
+  deuna_phone?: string;
+  cedula_number: string;
+  ruc_number?: string;
+  has_food_handling?: boolean;
+  food_safety_terms_accepted: boolean;
+  ruc_document?: UploadAsset;
+  cedula_document?: UploadAsset;
+  selfie_with_cedula?: UploadAsset;
+  permiso_funcionamiento?: UploadAsset;
+  arcsa_document?: UploadAsset;
+  bank_proof?: UploadAsset;
+  business_photo?: UploadAsset;
 }
 
 export interface ConfirmPickupByScanPayload {

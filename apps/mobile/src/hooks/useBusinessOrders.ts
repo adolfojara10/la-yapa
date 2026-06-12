@@ -24,3 +24,11 @@ export function useBusinessOrder(id: string | undefined) {
     staleTime: 0,
   });
 }
+
+export function useBusinessTodayOrders() {
+  return useQuery<BusinessOrder[], Error>({
+    queryKey: ['business', 'orders', 'today'],
+    queryFn: () => businessApi.listTodayOrders(),
+    staleTime: 30_000,
+  });
+}

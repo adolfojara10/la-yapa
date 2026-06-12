@@ -7,6 +7,18 @@ from . import views
 app_name = "business"
 
 urlpatterns = [
+    path("onboarding", views.OnboardingView.as_view(), name="onboarding"),
+    path("locations", views.LocationsView.as_view(), name="locations"),
+    path("locations/<int:pk>", views.LocationDetailView.as_view(), name="location-detail"),
+    path("bags", views.BagsView.as_view(), name="bags"),
+    path("bags/<uuid:pk>", views.BagDetailView.as_view(), name="bag-detail"),
+    path("bags/<uuid:pk>/duplicate", views.BagDuplicateView.as_view(), name="bag-duplicate"),
+    path("bag-templates", views.BagTemplatesView.as_view(), name="bag-templates"),
+    path(
+        "bag-templates/<uuid:pk>",
+        views.BagTemplateDetailView.as_view(),
+        name="bag-template-detail",
+    ),
     path("dashboard", views.DashboardView.as_view(), name="dashboard"),
     path("orders/active", views.ActiveOrdersView.as_view(), name="orders-active"),
     path("orders/today", views.TodayOrdersView.as_view(), name="orders-today"),

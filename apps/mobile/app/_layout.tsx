@@ -29,8 +29,10 @@ SplashScreen.preventAutoHideAsync().catch(() => null);
  *   2. tokens but email unverified → (auth)/verify-email
  *   3. consumer + !onboarding   → (auth)/onboarding
  *   4. role = consumer          → (consumer)
- *   5. role = business_owner    → (business)
- *   6. other roles              → logout (mobile only supports the two above)
+ *   5. business_owner + no business   → (business)/onboarding
+ *   6. business_owner + pending/rejected/suspended → (business)/status
+ *   7. business_owner + approved      → (business)
+ *   8. other roles                    → logout (mobile only supports the two above)
  *
  * Re-runs whenever (status, user, segments) change. The segments check
  * prevents an infinite loop: if we already match the target group, do nothing.
@@ -80,7 +82,22 @@ function AuthGuard() {
       return;
     }
     if (user.role === 'business_owner') {
-      if (!inBusinessGroup) router.replace('/(business)/(tabs)');
+      const summary = user.business_summary;
+      if (!summary) {
+        if (!(inBusinessGroup && currentScreen === 'onboarding')) {
+          router.replace('/(business)/onboarding');
+        }
+        return;
+      }
+      if (summary.status !== 'approved') {
+        if (!(inBusinessGroup && currentScreen === 'status')) {
+          router.replace('/(business)/status');
+        }
+        return;
+      }
+      if (!(inBusinessGroup && currentScreen !== 'onboarding' && currentScreen !== 'status')) {
+        router.replace('/(business)/(tabs)');
+      }
       return;
     }
     // admin / sales_rep should use the web admin; bounce them out.

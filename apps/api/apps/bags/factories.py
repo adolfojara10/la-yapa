@@ -11,7 +11,7 @@ from factory.django import DjangoModelFactory
 
 from apps.businesses.factories import BusinessLocationFactory
 
-from .models import AllergenTag, Bag, BagType
+from .models import AllergenTag, Bag, BagTemplate, BagType
 
 
 class AllergenTagFactory(DjangoModelFactory):
@@ -37,3 +37,16 @@ class BagFactory(DjangoModelFactory):
     pickup_window_start = factory.LazyFunction(lambda: timezone.now() + timedelta(hours=2))
     pickup_window_end = factory.LazyFunction(lambda: timezone.now() + timedelta(hours=4))
     is_active = True
+
+
+class BagTemplateFactory(DjangoModelFactory):
+    class Meta:
+        model = BagTemplate
+
+    business = factory.SubFactory("apps.businesses.factories.BusinessFactory")
+    name = factory.Sequence(lambda n: f"Plantilla #{n}")
+    type = BagType.SURPRISE
+    title = factory.Sequence(lambda n: f"Bolsa reutilizable #{n}")
+    description = "Plantilla para publicar rapido."
+    original_price = Decimal("12.00")
+    sale_price = Decimal("4.50")

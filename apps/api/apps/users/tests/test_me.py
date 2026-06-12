@@ -25,6 +25,7 @@ def test_me_get_returns_consumer_with_profile(authed_client, consumer_user):
     assert body["role"] == "consumer"
     assert body["consumer_profile"]["first_name"] == "Maya"
     assert "referral_code" in body["consumer_profile"]
+    assert body["business_summary"] is None
     # Onboarding is incomplete: no dietary tags yet.
     assert body["onboarding_completed"] is False
 
@@ -41,8 +42,8 @@ def test_me_get_business_owner_has_no_consumer_profile(api_client, business_user
     body = response.json()
     assert body["role"] == "business_owner"
     assert body["consumer_profile"] is None
-    # Business owners don't go through the consumer onboarding flow.
-    assert body["onboarding_completed"] is True
+    assert body["business_summary"] is None
+    assert body["onboarding_completed"] is False
 
 
 @pytest.mark.django_db

@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Heart, Home, User } from 'lucide-react-native';
+import { BriefcaseBusiness, Heart, Home, User } from 'lucide-react-native';
 
 import { useTheme } from '@/theme';
 
@@ -23,6 +23,13 @@ export default function BusinessTabsLayout() {
         options={{
           title: 'Pedidos',
           tabBarIcon: ({ color, size }) => <Home color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="bags"
+        options={{
+          title: 'Bolsas',
+          tabBarIcon: ({ color, size }) => <BriefcaseBusiness color={color} size={size} />,
         }}
       />
       <Tabs.Screen
