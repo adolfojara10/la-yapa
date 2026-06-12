@@ -14,9 +14,9 @@
 // ---------------------------------------------------------------------------
 export const palette = {
   // Primary
-  verdeParamo: '#2D6A4F',
-  terracottaInti: '#D97757',
-  amarilloSol: '#F4C430',
+  terracottaBrasa: '#B85C38',
+  paramoGreen: '#2D6A4F',
+  sunGold: '#F4C430',
 
   // Neutrals (light surface family)
   algodon: '#FAF6F0',
@@ -32,8 +32,8 @@ export const palette = {
   darkText: '#E8E5DE',
 
   // Semantic
-  successEco: '#52B788',
-  warning: '#F4A261',
+  ecoMint: '#4FAF7D',
+  warning: '#E7A24A',
   error: '#C44536',
   info: '#4A90E2',
 
@@ -107,28 +107,28 @@ export const lightScheme: ColorScheme = {
   textInverse: palette.blancoPuro,
   textOnPrimary: palette.blancoPuro,
 
-  primary: palette.verdeParamo,
-  primaryHover: '#26583F',
-  primaryActive: '#1F4634',
-  primarySoft: '#DCE9E1',
+  primary: palette.terracottaBrasa,
+  primaryHover: '#9F4E30',
+  primaryActive: '#864227',
+  primarySoft: '#F3DDD4',
 
-  secondary: palette.terracottaInti,
-  secondaryHover: '#C46647',
-  secondarySoft: '#F5DACE',
+  secondary: palette.paramoGreen,
+  secondaryHover: '#26583F',
+  secondarySoft: '#DCE9E1',
 
-  accent: palette.amarilloSol,
+  accent: palette.sunGold,
   accentSoft: '#FBE9A6',
 
-  success: palette.successEco,
-  successSoft: '#D6EFE0',
+  success: palette.ecoMint,
+  successSoft: '#D7EEDF',
   warning: palette.warning,
-  warningSoft: '#FBE3CC',
+  warningSoft: '#F6E1C2',
   error: palette.error,
   errorSoft: '#F1CFC9',
   info: palette.info,
   infoSoft: '#D2E2F4',
 
-  focusRing: palette.verdeParamo,
+  focusRing: palette.terracottaBrasa,
 };
 
 export const darkScheme: ColorScheme = {
@@ -145,28 +145,28 @@ export const darkScheme: ColorScheme = {
   textInverse: palette.tierra,
   textOnPrimary: palette.darkText,
 
-  primary: '#4F9275',
-  primaryHover: '#5FA585',
-  primaryActive: '#6FB995',
-  primarySoft: '#1F3A2E',
+  primary: '#D98662',
+  primaryHover: '#E39A7A',
+  primaryActive: '#EDAD91',
+  primarySoft: '#3E241C',
 
-  secondary: '#E08B6F',
-  secondaryHover: '#E89A82',
-  secondarySoft: '#3A2620',
+  secondary: '#5E9A80',
+  secondaryHover: '#72AE93',
+  secondarySoft: '#1F3A2E',
 
-  accent: palette.amarilloSol,
-  accentSoft: '#3A3320',
+  accent: '#E6BC4A',
+  accentSoft: '#3B3320',
 
-  success: palette.successEco,
-  successSoft: '#1F3A2A',
-  warning: palette.warning,
+  success: '#63C08E',
+  successSoft: '#1D3528',
+  warning: '#F0B463',
   warningSoft: '#3A2A1C',
-  error: '#D4604F',
+  error: '#D96B5E',
   errorSoft: '#3A1F1A',
-  info: '#6BA7E8',
+  info: '#78B2EC',
   infoSoft: '#1A2A3A',
 
-  focusRing: '#5FA585',
+  focusRing: '#E39A7A',
 };
 
 export type ThemeMode = 'light' | 'dark';

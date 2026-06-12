@@ -10,7 +10,7 @@
   <g transform="translate(8 12)">
     <!-- Leaf body -->
     <path d="M 38 8 C 18 8 4 30 4 52 C 4 64 14 72 28 72 C 50 72 72 50 72 28 C 72 16 60 8 38 8 Z"
-          fill="#2D6A4F"/>
+          fill="#B85C38"/>
     <!-- Mountain silhouette inside the leaf -->
     <path d="M 14 60 L 30 36 L 40 50 L 52 28 L 68 60 Z" fill="#FAF6F0"/>
     <!-- Mid vein -->

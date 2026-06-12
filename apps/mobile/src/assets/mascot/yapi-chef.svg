@@ -21,7 +21,7 @@
   <!-- Face -->
   <path d="M 82 60 Q 88 54 94 60" stroke="#1B2D2A" stroke-width="2.5" stroke-linecap="round" fill="none"/>
   <path d="M 106 60 Q 112 54 118 60" stroke="#1B2D2A" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-  <circle cx="80" cy="72" r="4" fill="#D97757" opacity="0.4"/>
-  <circle cx="120" cy="72" r="4" fill="#D97757" opacity="0.4"/>
+  <circle cx="80" cy="72" r="4" fill="#B85C38" opacity="0.4"/>
+  <circle cx="120" cy="72" r="4" fill="#B85C38" opacity="0.4"/>
   <path d="M 92 76 Q 100 82 108 76" stroke="#1B2D2A" stroke-width="2" stroke-linecap="round" fill="none"/>
 </svg>

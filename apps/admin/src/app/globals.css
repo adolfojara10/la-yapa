@@ -22,28 +22,28 @@
   --color-text-inverse: #ffffff;
   --color-text-on-primary: #ffffff;
 
-  --color-primary: #2d6a4f;
-  --color-primary-hover: #26583f;
-  --color-primary-active: #1f4634;
-  --color-primary-soft: #dce9e1;
+  --color-primary: #b85c38;
+  --color-primary-hover: #9f4e30;
+  --color-primary-active: #864227;
+  --color-primary-soft: #f3ddd4;
 
-  --color-secondary: #d97757;
-  --color-secondary-hover: #c46647;
-  --color-secondary-soft: #f5dace;
+  --color-secondary: #2d6a4f;
+  --color-secondary-hover: #26583f;
+  --color-secondary-soft: #dce9e1;
 
   --color-accent: #f4c430;
   --color-accent-soft: #fbe9a6;
 
-  --color-success: #52b788;
-  --color-success-soft: #d6efe0;
-  --color-warning: #f4a261;
-  --color-warning-soft: #fbe3cc;
+  --color-success: #4faf7d;
+  --color-success-soft: #d7eedf;
+  --color-warning: #e7a24a;
+  --color-warning-soft: #f6e1c2;
   --color-error: #c44536;
   --color-error-soft: #f1cfc9;
   --color-info: #4a90e2;
   --color-info-soft: #d2e2f4;
 
-  --color-focus-ring: #2d6a4f;
+  --color-focus-ring: #b85c38;
 }
 
 .dark,
@@ -61,28 +61,28 @@
   --color-text-inverse: #1b2d2a;
   --color-text-on-primary: #e8e5de;
 
-  --color-primary: #4f9275;
-  --color-primary-hover: #5fa585;
-  --color-primary-active: #6fb995;
-  --color-primary-soft: #1f3a2e;
+  --color-primary: #d98662;
+  --color-primary-hover: #e39a7a;
+  --color-primary-active: #edad91;
+  --color-primary-soft: #3e241c;
 
-  --color-secondary: #e08b6f;
-  --color-secondary-hover: #e89a82;
-  --color-secondary-soft: #3a2620;
+  --color-secondary: #5e9a80;
+  --color-secondary-hover: #72ae93;
+  --color-secondary-soft: #1f3a2e;
 
-  --color-accent: #f4c430;
-  --color-accent-soft: #3a3320;
+  --color-accent: #e6bc4a;
+  --color-accent-soft: #3b3320;
 
-  --color-success: #52b788;
-  --color-success-soft: #1f3a2a;
-  --color-warning: #f4a261;
+  --color-success: #63c08e;
+  --color-success-soft: #1d3528;
+  --color-warning: #f0b463;
   --color-warning-soft: #3a2a1c;
-  --color-error: #d4604f;
+  --color-error: #d96b5e;
   --color-error-soft: #3a1f1a;
-  --color-info: #6ba7e8;
+  --color-info: #78b2ec;
   --color-info-soft: #1a2a3a;
 
-  --color-focus-ring: #5fa585;
+  --color-focus-ring: #e39a7a;
 }
 
 @layer base {

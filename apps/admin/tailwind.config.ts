@@ -7,7 +7,7 @@ import { palette, radii, spacing, typeScale } from '@layapa/ui';
  * Tailwind config that mirrors the design tokens from `@layapa/ui`.
  *
  * Brand colors are exposed two ways:
- *   • As raw palette utilities (`bg-verde-paramo`) — useful for marketing pages.
+ *   • As raw palette utilities (`bg-terracotta-brasa`) — useful for marketing pages.
  *   • As semantic utilities backed by CSS variables (`bg-background`, `text-foreground`, …)
  *     so light/dark mode swaps just by toggling the `.dark` class.
  */
@@ -25,14 +25,14 @@ const config: Config = {
     extend: {
       colors: {
         // ----- Raw palette (for marketing surfaces) -----
-        'verde-paramo': palette.verdeParamo,
-        'terracotta-inti': palette.terracottaInti,
-        'amarillo-sol': palette.amarilloSol,
+        'terracotta-brasa': palette.terracottaBrasa,
+        'paramo-green': palette.paramoGreen,
+        'sun-gold': palette.sunGold,
         algodon: palette.algodon,
         tierra: palette.tierra,
         niebla: palette.niebla,
         piedra: palette.piedra,
-        'success-eco': palette.successEco,
+        'eco-mint': palette.ecoMint,
 
         // ----- Semantic (light/dark via CSS variables) -----
         background: cssVar('background'),

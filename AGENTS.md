@@ -107,7 +107,7 @@ If a task requires deviating from this stack, **ask first**.
   `theme.spacing.{0..16}`, `theme.radii.*`, `theme.type.*`.
 - **Admin components use Tailwind semantic classes** (`bg-primary`,
   `text-foreground`, `border-border`) — never raw hex. Brand palette
-  utilities (`bg-verde-paramo`) are for marketing surfaces only.
+  utilities (`bg-terracotta-brasa`) are for marketing surfaces only.
 - **shadcn-style on admin** (Radix primitive + `cva` + `cn()` helper).
   **Bespoke on mobile** — no shadcn-for-RN libraries.
 

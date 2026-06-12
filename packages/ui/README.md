@@ -25,7 +25,7 @@ because RN and DOM components can't share implementation, only tokens.
 
 Two palettes are exported:
 
-- **`palette`** — raw named brand colors (`palette.verdeParamo`, …). Use these
+- **`palette`** — raw named brand colors (`palette.terracottaBrasa`, …). Use these
   only for marketing surfaces or one-off illustrations.
 - **`lightScheme`, `darkScheme`** — _semantic_ tokens grouped by intent
   (`primary`, `surface`, `text`, `border`, `success`, …). Components should

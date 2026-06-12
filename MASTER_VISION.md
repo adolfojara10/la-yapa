@@ -62,9 +62,9 @@ Perfect! Generating the **master prompt now**. Buckle up — this is comprehensi
 
 ```css
 /* Primary */
---verde-paramo: #2d6a4f; /* Andean deep green - primary */
---terracotta-inti: #d97757; /* Sun terracotta - secondary */
---amarillo-sol: #f4c430; /* Golden yellow - accent */
+--terracotta-brasa: #b85c38; /* Warm terracotta - primary */
+--paramo-green: #2d6a4f; /* Andean deep green - secondary */
+--sun-gold: #f4c430; /* Golden yellow - accent */
 
 /* Neutrals */
 --algodon: #faf6f0; /* Cream background */
@@ -80,8 +80,8 @@ Perfect! Generating the **master prompt now**. Buckle up — this is comprehensi
 --dark-text: #e8e5de;
 
 /* Semantic */
---success-eco: #52b788; /* Eco green */
---warning: #f4a261; /* Warning orange */
+--eco-mint: #4faf7d; /* Success green */
+--warning: #e7a24a; /* Warning orange */
 --error: #c44536; /* Error red */
 --info: #4a90e2; /* Info blue */
 ```
