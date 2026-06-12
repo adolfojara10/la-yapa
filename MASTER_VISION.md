@@ -140,7 +140,7 @@ Perfect! Generating the **master prompt now**. Buckle up — this is comprehensi
 | Authentication       | Django Simple JWT + django-allauth (Google, Apple)                                      |
 | Admin Panel          | Django Admin (customized with Jazzmin/Unfold) + custom DRF endpoints for business panel |
 | Business Panel       | Next.js 14 (App Router) — web-based                                                     |
-| Maps                 | Mapbox (mobile SDK + Geocoding API)                                                     |
+| Maps                 | OpenStreetMap tiles + backend geocoding proxy                                           |
 | Payments             | PayPhone + DeUna (MVP); Kushki (Phase 2 for Apple/Google Pay + intl cards)              |
 | File Storage         | Cloudflare R2 (S3-compatible)                                                           |
 | Push Notifications   | Expo Push Notifications                                                                 |
@@ -197,7 +197,7 @@ la-yapa/
 │       │   ├── gamification/
 │       │   ├── suspended_meals/
 │       │   ├── impact/
-│       │   ├── geo/             # Mapbox integration
+│       │   ├── geo/             # Geocoding proxy + geo helpers
 │       │   └── core/            # Shared utils
 │       ├── manage.py
 │       ├── requirements.txt
@@ -287,7 +287,7 @@ User(AbstractUser)
 ConsumerProfile (OneToOne with User)
     - first_name, last_name
     - avatar_url
-    - default_location (PointField — Mapbox)
+    - default_location (PointField)
     - default_address
     - dietary_preferences (M2M with DietaryTag)
     - notifications_settings (JSON)
@@ -623,7 +623,7 @@ Invoice
   └── /kushki/webhook
 
 /api/v1/geo/                       # Geo + maps
-  ├── /search                      # Mapbox proxy
+  ├── /search                      # Geocoding proxy
   └── /reverse                     # Reverse geocoding
 
 /api/v1/notifications/
@@ -668,11 +668,11 @@ Invoice
 
 - **Default radius:** 3km
 - **Location:** Required (graceful fallback to city-level if denied)
-- **Map view:** Mapbox with custom Andean-themed style
+- **Map view:** OpenStreetMap raster tiles with branded in-app overlays
 - **Markers:** Business locations with bag count badge
 - **Filters:** Type, dietary tags, allergens, price range, pickup time, rating
 - **Sort:** Distance, price, rating, ending soon
-- **Search:** Mapbox Geocoding for address/place search
+- **Search:** Backend geocoding proxy (Photon by default; provider-swappable)
 
 ---
 

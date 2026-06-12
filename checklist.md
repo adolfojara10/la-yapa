@@ -110,9 +110,9 @@ Before starting the next session, ALWAYS verify:
 - [ ] Search bar `q` filters bags by title/business name as you type
 - [ ] Sticky "Reservar por $X.XX" CTA on detail shows the "checkout next session" toast
 - [ ] Empty state ("No hay bolsas con esos filtros") shows when filters return zero
-- 🔒 (pending: Mapbox `pk.*` + `sk.*` tokens) Map view shows real Mapbox tiles
-- 🔒 (pending: Mapbox tokens) Markers cluster by location with a count badge
-- 🔒 (pending: Mapbox tokens) Tap marker → bottom sheet opens with that location's bags
+- [ ] Map view shows real OpenStreetMap tiles
+- [ ] Markers cluster by location with a count badge
+- [ ] Tap marker → bottom sheet opens with that location's bags
 - 🔒 (pending: real Yapi artwork) Empty state shows Yapi sleepy illustration
 
 #### 💳 Checkout Tests _(Session 8 — backend + mobile complete; provider integration unverified)_
@@ -428,7 +428,7 @@ EOF
 #### 🚨 Red Flags
 
 - ❌ JWT not refreshing → fix interceptor
-- ❌ Mapbox not rendering → check API key + permissions
+- ❌ OSM tiles not rendering → check network access, `react-native-maps` rebuild, and tile overlay
 - ❌ Payment webhook fails → check signature validation
 - ❌ Push notifications not arriving → check Expo push token registration
 

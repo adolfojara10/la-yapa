@@ -389,9 +389,7 @@ Re-run `expo run:android` **only** after changing native config:
 For 99% of work (JS, React components, screens, styles, business logic) you
 **do not** rebuild — just reload the JS bundle.
 
-> 🗺️ **Mapbox Warning:** To compile the Android app with the map features, you **MUST** export a Mapbox Secret Token with `downloads:read` scope before running the build command:
-> `export MAPBOX_DOWNLOAD_TOKEN="sk.your_token..."`
-> If you do not have a Mapbox token, the build will fail with `Could not find com.mapbox.maps`. You can temporarily remove `@rnmapbox/maps` from `package.json` and `app.json` to bypass this while developing other features.
+> 🗺️ **Maps Note:** The mobile app now uses `react-native-maps` with OpenStreetMap raster tiles. No map token is required, but because `react-native-maps` is a native dependency you must re-run `pnpm --filter @layapa/mobile exec expo run:android --device` once after install/version bumps.
 
 ---
 

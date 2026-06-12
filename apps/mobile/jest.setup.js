@@ -77,32 +77,16 @@ jest.mock('expo-linking', () => ({
   openURL: jest.fn(),
 }));
 
-// @rnmapbox/maps: pure inert mock — tests don't render the map screen.
-jest.mock(
-  '@rnmapbox/maps',
-  () => {
-    const { View } = require('react-native');
-    const passthrough = ({ children }) => children ?? null;
-    return {
-      __esModule: true,
-      default: {
-        setAccessToken: jest.fn(),
-        StyleURL: { Light: 'mapbox://styles/mapbox/light-v11' },
-        MapView: View,
-        Camera: passthrough,
-        UserLocation: passthrough,
-        PointAnnotation: passthrough,
-      },
-      setAccessToken: jest.fn(),
-      StyleURL: { Light: 'mapbox://styles/mapbox/light-v11' },
-      MapView: View,
-      Camera: passthrough,
-      UserLocation: passthrough,
-      PointAnnotation: passthrough,
-    };
-  },
-  { virtual: true },
-);
+// react-native-maps: inert primitives so map-dependent screens mount in Jest.
+jest.mock('react-native-maps', () => {
+  const { View } = require('react-native');
+  return {
+    __esModule: true,
+    default: View,
+    Marker: View,
+    UrlTile: View,
+  };
+});
 
 // @gorhom/bottom-sheet: simple passthrough so screens that mount it don't crash.
 // We use forwardRef so imperative-handle .snapToIndex/.close are no-op

@@ -533,6 +533,42 @@ on the device — run after a fresh `expo start -c`):
 
 ---
 
+### Session 10 — OpenStreetMap migration (maps + geo proxy)
+
+**Built / changed**
+
+- **Backend (`apps.geo`):**
+  - New `/api/v1/geo/search` + `/api/v1/geo/reverse` endpoints backed by a
+    configurable OSM-compatible provider client (`photon.komoot.io` by
+    default).
+  - Added request identification, cache TTLs, and provider timeout settings in
+    `config/settings/base.py` so provider changes remain env-level.
+  - Added cache-backed normalization tests for search + reverse payloads.
+- **Mobile (`apps/mobile`):**
+  - Replaced the placeholder map screen with `react-native-maps` + OSM raster
+    tiles, grouped location markers, and the existing bag bottom-sheet flow.
+  - Migrated `useGeocode` from direct Mapbox calls to the backend geo proxy.
+  - Removed Mapbox env scaffolding and swapped the Jest map mock to
+    `react-native-maps`.
+
+**Decisions**
+
+- **Photon behind a backend proxy** over direct public Nominatim usage. Public
+  Nominatim explicitly forbids client-side autocomplete; the proxy keeps us
+  compliant and provider-swappable.
+- **No new bag API shape** for the OSM map migration. Existing location fields
+  on `BagListItem.business` were enough to drive grouped markers.
+
+**Caveats / known gaps**
+
+- **iOS tile behavior still needs device QA.** `react-native-maps` + `UrlTile`
+  is implemented, but only an Android dev-client rebuild is documented in this
+  repo today.
+- **Local API pytest may fail until the venv matches `requirements.txt`.** The
+  geo test suite assumes the same dependency set CI uses.
+
+---
+
 ## 🎯 Next-up priorities
 
 ### Session 8 — Checkout flow end-to-end (PayPhone + DeUna)
@@ -869,8 +905,7 @@ beat -l info` in two terminals. Without them, `apply_async(eta=...)`
    `seed_demo_data` or Django admin only.
 4. **Favorites list UI** + **Profile editing** (consumer side) — both
    placeholders since Sessions 6/7.
-5. **Mapbox geocoding proxy** on the backend with caching.
-6. **Custom Yapi mascot artwork + business app branding pass.**
+5. **Custom Yapi mascot artwork + business app branding pass.**
 
 ### Phase 2 — Business core (Weeks 7-9)
 

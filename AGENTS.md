@@ -54,7 +54,7 @@ Per-app filters: `pnpm --filter @layapa/mobile <script>` /
 | Database         | PostgreSQL 16 + PostGIS 3.4                                   |
 | Cache / queue    | Redis 7 + Celery 5                                            |
 | File storage     | Cloudflare R2 (S3 API)                                        |
-| Maps             | Mapbox                                                        |
+| Maps             | OpenStreetMap tiles + Photon-backed geo proxy                 |
 | Payments         | PayPhone + DeUna (MVP); Kushki (Phase 2)                      |
 | Push             | Expo Push Notifications                                       |
 | Email            | Resend (prod); MailHog (dev)                                  |
@@ -252,31 +252,31 @@ end-to-end you need credentials from each provider's console.
    change (the `prod.py` settings already select
    `anymail.backends.resend.EmailBackend`).
 
-### Provisioning Mapbox
+### Provisioning Geo Search + OSM Maps
 
-The mobile browse screen uses `@rnmapbox/maps` (native Mapbox SDK) for the
-map view and Mapbox Geocoding API for the search-by-address autocomplete.
-**Two distinct tokens are needed:**
+The mobile browse screen now renders OpenStreetMap raster tiles through
+`react-native-maps` and resolves search suggestions through the backend
+`/api/v1/geo/*` proxy.
 
-1. **Public access token (`pk.*`)** — runtime, bundled into the mobile app.
-   Used by `Mapbox.setAccessToken(...)` at module load and by the geocoding
-   `fetch()` calls. Scopes: `styles:read`, `fonts:read`, `tiles:read`,
-   `vision:read`. Generate at mapbox.com → Account → Tokens.
-   - Env: `EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN` in `apps/mobile/.env`.
-2. **Secret download token (`sk.*`)** — build-time only, used by
-   `@rnmapbox/maps`'s config plugin to fetch the native SDK from Mapbox's
-   private maven/CocoaPods repo. **Never** bundled into the app. Scopes:
-   `downloads:read`. Generate the same way as above.
-   - Env: `MAPBOX_DOWNLOAD_TOKEN` exported in your shell before
-     `expo run:android` / `expo run:ios`. Plumbed into `app.json` via the
-     `RNMapboxMapsDownloadToken` plugin option (committed empty; the build
-     reads the env var at prebuild time).
+**No map token is required** for local development.
 
-Until both tokens are provisioned, the Android dev-client build still
-completes but **Mapbox tiles refuse to render** — the map tab shows an
-empty grid. List view and all filters remain fully functional in that
-degraded state. The empty grid is the expected behavior for an
-unauthenticated Mapbox client; it's not a crash.
+What does need configuration:
+
+1. **Geo provider base URLs** — defaults point to Photon:
+   - `GEO_PROVIDER_SEARCH_URL=https://photon.komoot.io/api/`
+   - `GEO_PROVIDER_REVERSE_URL=https://photon.komoot.io/reverse`
+2. **Provider identification** — required because public OSM-compatible
+   geocoders expect a distinct app identity:
+   - `GEO_PROVIDER_USER_AGENT=LaYapaGeoProxy/0.1 (+https://layapa.ec; contact: hola@layapa.ec)`
+3. **Cache + timeout knobs** — keep request volume low and make provider swaps
+   operational rather than app-release work:
+   - `GEO_REQUEST_TIMEOUT_SECONDS=10`
+   - `GEO_SEARCH_CACHE_TTL_SECONDS=600`
+   - `GEO_REVERSE_CACHE_TTL_SECONDS=3600`
+
+Important policy note: **do not wire public Nominatim directly from the
+device for autocomplete.** The app should keep using the backend proxy so we
+can cache, rate-limit, and swap providers without shipping a mobile update.
 
 ### Provisioning payment providers
 
@@ -400,21 +400,21 @@ definitions if you'd rather run them in Docker.
 
 These trip up agents repeatedly. **Don't "fix" them.**
 
-| Pattern                                                                              | Why                                                                                                                                                                                                                                                                                                                                                                           |
-| ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `apps/mobile/metro.config.js` uses CommonJS (`require`, `__dirname`)                 | Metro requires CJS for the resolver config. ESLint override handles it.                                                                                                                                                                                                                                                                                                       |
-| `apps/api/apps/users/models.py` has `REQUIRED_FIELDS = ["username"]` as a plain list | Django framework attribute, not a typo. Ruff's `RUF012` is globally suppressed in `pyproject.toml`.                                                                                                                                                                                                                                                                           |
-| `# noqa: BLE001` on `except Exception:` in `core/views.py` health check              | Health checks must always return — broad except is intentional.                                                                                                                                                                                                                                                                                                               |
-| `apps/admin/tailwind.config.ts` uses `var(--color-…)` not channel triplets           | Single-source tokens, no preprocessing. Opacity utilities (`bg-primary/50`) won't work — that's a documented trade-off in `packages/ui/README.md`.                                                                                                                                                                                                                            |
-| Bag `save()` calls `self.full_clean()`                                               | Enforces price validation at the model layer, not just the form/serializer. Keep it.                                                                                                                                                                                                                                                                                          |
-| `django.contrib.gis` removed from `INSTALLED_APPS` in `test.py`                      | Avoids GDAL system-lib requirement. The geo shim handles field types.                                                                                                                                                                                                                                                                                                         |
-| `apps/api/.husky/pre-commit` has no shebang or `husky.sh` source line                | Husky v9 deprecated the old format; new format is just the command.                                                                                                                                                                                                                                                                                                           |
-| `pnpm/action-setup@v4` has no `version:` input in CI                                 | It reads `packageManager` from `package.json` to avoid drift.                                                                                                                                                                                                                                                                                                                 |
-| `pnpm-lock.yaml` is 14k lines and committed                                          | Required by `pnpm install --frozen-lockfile` and `setup-node` cache.                                                                                                                                                                                                                                                                                                          |
-| `apps/mobile/metro.config.js` redirects `react` / `react-dom` to the workspace root  | pnpm hoists `react@19` (mobile/RN 0.81) at the root but nests `react@18` under deps with `^18 \|\| ^19` peer ranges (e.g. `@tanstack/react-query`). Without the redirect, Metro bundles two React copies → "Invalid hook call". Mobile-only; admin (Next 14) still uses `react@18` correctly.                                                                                 |
-| Mobile uses `expo-secure-store` (not `AsyncStorage`) for JWT tokens                  | `AsyncStorage` writes to plaintext sqlite/MMKV on both platforms; refresh tokens are long-lived and must live in iOS Keychain / Android Keystore. The wrapper at `apps/mobile/src/auth/secureStorage.ts` falls back to in-memory only on `web` (where SecureStore is unavailable) — never to AsyncStorage.                                                                    |
-| `apps/mobile/app.json` has `"typedRoutes": false`                                    | Typed routes regenerate `.expo/types/router.d.ts` on every `expo start`, making `<Link href="…">` and `router.push("…")` calls type-check against the literal route table. Convenient when stable; brittle while the route tree is still in flux (CI can't run `expo start` to regenerate the types before `tsc`). Re-enable once the route tree stops moving.                |
-| `@rnmapbox/maps` requires `expo run:android` rebuild on first install                | Same drill as the auth deps in Session 6 — the SDK has native code, so JS-only Metro reloads don't pick up the new module. After `pnpm install` (or any version bump of `@rnmapbox/maps` itself), re-run `pnpm --filter @layapa/mobile exec expo run:android --device` once. Without the rebuild, the app crashes at import time with "Native module RNMBXMapView not found". |
+| Pattern                                                                              | Why                                                                                                                                                                                                                                                                                                                                                            |
+| ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/mobile/metro.config.js` uses CommonJS (`require`, `__dirname`)                 | Metro requires CJS for the resolver config. ESLint override handles it.                                                                                                                                                                                                                                                                                        |
+| `apps/api/apps/users/models.py` has `REQUIRED_FIELDS = ["username"]` as a plain list | Django framework attribute, not a typo. Ruff's `RUF012` is globally suppressed in `pyproject.toml`.                                                                                                                                                                                                                                                            |
+| `# noqa: BLE001` on `except Exception:` in `core/views.py` health check              | Health checks must always return — broad except is intentional.                                                                                                                                                                                                                                                                                                |
+| `apps/admin/tailwind.config.ts` uses `var(--color-…)` not channel triplets           | Single-source tokens, no preprocessing. Opacity utilities (`bg-primary/50`) won't work — that's a documented trade-off in `packages/ui/README.md`.                                                                                                                                                                                                             |
+| Bag `save()` calls `self.full_clean()`                                               | Enforces price validation at the model layer, not just the form/serializer. Keep it.                                                                                                                                                                                                                                                                           |
+| `django.contrib.gis` removed from `INSTALLED_APPS` in `test.py`                      | Avoids GDAL system-lib requirement. The geo shim handles field types.                                                                                                                                                                                                                                                                                          |
+| `apps/api/.husky/pre-commit` has no shebang or `husky.sh` source line                | Husky v9 deprecated the old format; new format is just the command.                                                                                                                                                                                                                                                                                            |
+| `pnpm/action-setup@v4` has no `version:` input in CI                                 | It reads `packageManager` from `package.json` to avoid drift.                                                                                                                                                                                                                                                                                                  |
+| `pnpm-lock.yaml` is 14k lines and committed                                          | Required by `pnpm install --frozen-lockfile` and `setup-node` cache.                                                                                                                                                                                                                                                                                           |
+| `apps/mobile/metro.config.js` redirects `react` / `react-dom` to the workspace root  | pnpm hoists `react@19` (mobile/RN 0.81) at the root but nests `react@18` under deps with `^18 \|\| ^19` peer ranges (e.g. `@tanstack/react-query`). Without the redirect, Metro bundles two React copies → "Invalid hook call". Mobile-only; admin (Next 14) still uses `react@18` correctly.                                                                  |
+| Mobile uses `expo-secure-store` (not `AsyncStorage`) for JWT tokens                  | `AsyncStorage` writes to plaintext sqlite/MMKV on both platforms; refresh tokens are long-lived and must live in iOS Keychain / Android Keystore. The wrapper at `apps/mobile/src/auth/secureStorage.ts` falls back to in-memory only on `web` (where SecureStore is unavailable) — never to AsyncStorage.                                                     |
+| `apps/mobile/app.json` has `"typedRoutes": false`                                    | Typed routes regenerate `.expo/types/router.d.ts` on every `expo start`, making `<Link href="…">` and `router.push("…")` calls type-check against the literal route table. Convenient when stable; brittle while the route tree is still in flux (CI can't run `expo start` to regenerate the types before `tsc`). Re-enable once the route tree stops moving. |
+| `react-native-maps` requires `expo run:android` rebuild on first install             | Same drill as the auth deps in Session 6 — the SDK has native code, so JS-only Metro reloads don't pick up the new module. After `pnpm install` (or any version bump of `react-native-maps` itself), re-run `pnpm --filter @layapa/mobile exec expo run:android --device` once.                                                                                |
 
 ---
 

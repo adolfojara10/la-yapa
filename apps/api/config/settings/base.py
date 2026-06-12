@@ -260,6 +260,21 @@ CORS_ALLOWED_ORIGINS = env.list(
 )
 CORS_ALLOW_CREDENTIALS = True
 
+# ---------- Geo provider ----------
+GEO_PROVIDER_SEARCH_URL = env(
+    "GEO_PROVIDER_SEARCH_URL", default="https://photon.komoot.io/api/"
+)
+GEO_PROVIDER_REVERSE_URL = env(
+    "GEO_PROVIDER_REVERSE_URL", default="https://photon.komoot.io/reverse"
+)
+GEO_PROVIDER_USER_AGENT = env(
+    "GEO_PROVIDER_USER_AGENT",
+    default="LaYapaGeoProxy/0.1 (+https://layapa.ec; contact: hola@layapa.ec)",
+)
+GEO_REQUEST_TIMEOUT_SECONDS = env.int("GEO_REQUEST_TIMEOUT_SECONDS", default=10)
+GEO_SEARCH_CACHE_TTL_SECONDS = env.int("GEO_SEARCH_CACHE_TTL_SECONDS", default=600)
+GEO_REVERSE_CACHE_TTL_SECONDS = env.int("GEO_REVERSE_CACHE_TTL_SECONDS", default=3600)
+
 # ---------- i18n ----------
 LANGUAGE_CODE = "es"
 TIME_ZONE = "America/Guayaquil"
