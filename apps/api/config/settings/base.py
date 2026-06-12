@@ -261,9 +261,7 @@ CORS_ALLOWED_ORIGINS = env.list(
 CORS_ALLOW_CREDENTIALS = True
 
 # ---------- Geo provider ----------
-GEO_PROVIDER_SEARCH_URL = env(
-    "GEO_PROVIDER_SEARCH_URL", default="https://photon.komoot.io/api/"
-)
+GEO_PROVIDER_SEARCH_URL = env("GEO_PROVIDER_SEARCH_URL", default="https://photon.komoot.io/api/")
 GEO_PROVIDER_REVERSE_URL = env(
     "GEO_PROVIDER_REVERSE_URL", default="https://photon.komoot.io/reverse"
 )
