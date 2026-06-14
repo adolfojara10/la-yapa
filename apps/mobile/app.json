@@ -17,7 +17,12 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FAF6F0"
       },
-      "package": "ec.layapa.app"
+      "package": "ec.layapa.app",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSy_FAKE_MAPS_KEY_FOR_LOCAL_DEV_ONLY"
+        }
+      }
     },
     "web": {
       "bundler": "metro",

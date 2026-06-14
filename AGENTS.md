@@ -258,7 +258,15 @@ The mobile browse screen now renders OpenStreetMap raster tiles through
 `react-native-maps` and resolves search suggestions through the backend
 `/api/v1/geo/*` proxy.
 
-**No map token is required** for local development.
+**A valid Google Maps API Key is required** for local development on Android.
+
+Recent Google Play Services updates strictly enforce API key verification. Without a valid key, the map canvas is completely disabled (blank white screen), preventing even custom OpenStreetMap tiles from rendering.
+
+**To configure the API Key locally:**
+
+1. Open or create `apps/mobile/android/local.properties`.
+2. Add the following line: `GOOGLE_MAPS_API_KEY=AIzaSy...`
+   _(The Gradle build script will automatically inject this into the `AndroidManifest.xml` via `manifestPlaceholders` during the build process, keeping your key out of version control)._
 
 What does need configuration:
 

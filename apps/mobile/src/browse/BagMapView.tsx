@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
 import MapView, { Marker, UrlTile } from 'react-native-maps';
 
 import { Text } from '@/components/ui/Text';
@@ -63,9 +63,11 @@ export function BagMapView({ location }: Props) {
         mapType="none"
       >
         <UrlTile
-          urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+          key="cartodb-tile-3"
+          urlTemplate="https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png"
           maximumZ={19}
           flipY={false}
+          zIndex={-1}
         />
         {groups.map((group) => (
           <Marker
