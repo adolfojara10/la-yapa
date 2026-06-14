@@ -20,6 +20,7 @@ api_v1_patterns = [
     path("consumer/", include("apps.consumer.urls", namespace="consumer")),
     path("payments/", include("apps.payments.urls", namespace="payments")),
     path("business/", include("apps.business.urls", namespace="business")),
+    path("admin/", include("apps.ops.urls", namespace="ops")),
     path("notifications/", include("apps.notifications.urls", namespace="notifications")),
 ]
 

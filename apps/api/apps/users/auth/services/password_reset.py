@@ -27,14 +27,7 @@ def request_reset(email: str) -> None:
     except User.DoesNotExist:
         return
 
-    _, raw_token = PasswordResetToken.issue(user)
-
-    # Web link (admin / desktop browser) — long-lived universal-link-ready.
-    web_link = f"{settings.FRONTEND_URL}/reset-password?{urlencode({'token': raw_token})}"
-    # Mobile deep-link (Expo Router will pick this up).
-    mobile_link = (
-        f"{settings.MOBILE_DEEP_LINK_SCHEME}://reset-password?{urlencode({'token': raw_token})}"
-    )
+    web_link, mobile_link = issue_reset_links(user)
 
     send_templated_email(
         to=user.email,
@@ -49,6 +42,17 @@ def request_reset(email: str) -> None:
         },
         language=user.language,
     )
+
+
+def issue_reset_links(user: User) -> tuple[str, str]:
+    """Return fresh (web_link, mobile_link) reset URLs for `user`."""
+
+    _, raw_token = PasswordResetToken.issue(user)
+    web_link = f"{settings.FRONTEND_URL}/reset-password?{urlencode({'token': raw_token})}"
+    mobile_link = (
+        f"{settings.MOBILE_DEEP_LINK_SCHEME}://reset-password?{urlencode({'token': raw_token})}"
+    )
+    return web_link, mobile_link
 
 
 class ResetError(Exception):

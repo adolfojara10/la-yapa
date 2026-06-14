@@ -69,6 +69,7 @@ class Business(TimestampedModel):
         max_length=20, choices=BusinessStatus.choices, default=BusinessStatus.PENDING, db_index=True
     )
     rejection_reason = models.TextField(blank=True)
+    review_notes = models.TextField(blank=True)
     approved_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         null=True,

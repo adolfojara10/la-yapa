@@ -484,6 +484,14 @@ EOF
 - 🔒 (pending: user management page) User management: search, suspend works
 - 🔒 (pending: push-campaign composer) Push campaign composer → sends test push to admin
 
+#### 🧊 Deferred Admin Scope
+
+- 🔒 (pending later: bags moderation) Admin bags moderation queue
+- 🔒 (pending later: reviews moderation) Admin reviews moderation queue
+- 🔒 (pending later: suspended meals admin) Suspended meals pool + history admin views
+- 🔒 (pending later: gamification admin) Badges and levels admin screens
+- 🔒 (pending later: admin settings) Commission rates and platform config screens
+
 #### 💰 Payout Calculation Tests (Critical!)
 
 - 🔒 (pending: payout calc service) Business with 10 orders → payout = sum(sale_price - commission) - refunds - bonus credits

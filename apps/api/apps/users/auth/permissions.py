@@ -41,6 +41,18 @@ class SalesRepOnly(_RolePermission):
     role = User.Role.SALES_REP
 
 
+class AdminOrSalesRepOnly(permissions.BasePermission):
+    message = "Your account role is not allowed to access this resource."
+
+    def has_permission(self, request, view) -> bool:
+        user = getattr(request, "user", None)
+        return bool(
+            user
+            and user.is_authenticated
+            and getattr(user, "role", None) in {User.Role.ADMIN, User.Role.SALES_REP}
+        )
+
+
 class IsEmailVerified(permissions.BasePermission):
     """Gate that mirrors the mobile routing guard: lets unverified users in
     only enough to call `/auth/verify-email/*` and read their own profile.

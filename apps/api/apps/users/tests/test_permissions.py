@@ -8,6 +8,7 @@ import pytest
 
 from apps.users.auth.permissions import (
     AdminOnly,
+    AdminOrSalesRepOnly,
     BusinessOwnerOnly,
     ConsumerOnly,
     IsEmailVerified,
@@ -63,6 +64,19 @@ def test_sales_rep_only():
 
 
 @pytest.mark.django_db
+def test_admin_or_sales_rep_only():
+    from apps.users.models import User
+
+    admin = AdminUserFactory()
+    rep = UserFactory(role=User.Role.SALES_REP)
+    consumer = UserFactory()
+    perm = AdminOrSalesRepOnly()
+    assert perm.has_permission(_request_for(admin), None) is True
+    assert perm.has_permission(_request_for(rep), None) is True
+    assert perm.has_permission(_request_for(consumer), None) is False
+
+
+@pytest.mark.django_db
 def test_email_verified_gate():
     verified = UserFactory(is_email_verified=True)
     unverified = UserFactory(is_email_verified=False)
@@ -76,5 +90,12 @@ def test_unauthenticated_request_always_denied():
     anon.is_authenticated = False
     req = Mock()
     req.user = anon
-    for cls in (ConsumerOnly, BusinessOwnerOnly, AdminOnly, SalesRepOnly, IsEmailVerified):
+    for cls in (
+        ConsumerOnly,
+        BusinessOwnerOnly,
+        AdminOnly,
+        SalesRepOnly,
+        AdminOrSalesRepOnly,
+        IsEmailVerified,
+    ):
         assert cls().has_permission(req, None) is False

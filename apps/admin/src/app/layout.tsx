@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Fraunces, Inter, Poppins } from 'next/font/google';
 
-import { ThemeProvider } from '@/components/theme-provider';
+import { AppProviders } from '@/components/app-providers';
 
 import './globals.css';
 
@@ -39,9 +39,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       className={`${inter.variable} ${poppins.variable} ${fraunces.variable}`}
     >
       <body>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          {children}
-        </ThemeProvider>
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   );

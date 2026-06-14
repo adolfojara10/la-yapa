@@ -922,6 +922,14 @@ beat -l info` in two terminals. Without them, `apply_async(eta=...)`
     approve/reject with reason, soft suspension.
 11. **Payout management** — period close, CSV export.
 
+### Deferred admin backlog
+
+- **Bags moderation** — later admin pass, not part of the current admin MVP.
+- **Reviews moderation** — later admin pass, not part of the current admin MVP.
+- **Suspended meals admin views** — later admin pass, not part of the current admin MVP.
+- **Gamification admin pages** — later admin pass, not part of the current admin MVP.
+- **Admin settings pages** — later admin pass, not part of the current admin MVP.
+
 ### Cross-cutting / infra debt
 
 - [x] **Install Android Studio + SDK + AVD on dev machine** so
